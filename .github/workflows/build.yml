@@ -1,0 +1,248 @@
+# This workflow will run to update the installer library of
+# Docker images.  These are the images which provide updated wheels
+# .deb installation packages or maybe just some compiled library
+
+name: Build Installer Library
+
+on:
+  workflow_dispatch:
+    inputs:
+      qpdf_version:
+        description: 'qpdf version'
+        type: string
+        required: true
+        default: '11.3.0'
+      pikepdf_version:
+        description: 'pikepdf version'
+        type: string
+        required: true
+        default: '7.2.0'
+      psycopg2_version:
+        description: 'psycopg2 version'
+        type: string
+        required: true
+        default: '2.9.6'
+      jbig2enc_version:
+        description: 'jbig2enc version'
+        type: string
+        required: true
+        default: '0.29'
+      lxml_version:
+        description: 'lxml version'
+        type: string
+        required: true
+        default: '4.9.2'
+      pillow_version:
+        description: 'pillow version'
+        type: string
+        required: true
+        default: '9.5.0'
+
+concurrency:
+  group: build-installer-library
+  cancel-in-progress: false
+
+jobs:
+
+  build-qpdf-debs:
+    name: qpdf @ ${{ inputs.qpdf_version }}
+    uses: ./.github/workflows/reusable-builder.yml
+    secrets: inherit
+    with:
+      dockerfile: ./qpdf.dockerfile
+      build-platforms: linux/amd64
+      image-tag: ghcr.io/paperless-ngx/builder/qpdf:${{ inputs.qpdf_version }}
+      cache-tag: ghcr.io/paperless-ngx/builder/cache/qpdf:${{ inputs.qpdf_version }}
+      build-args: |
+        QPDF_VERSION=${{ inputs.qpdf_version }}
+
+  build-jbig2enc:
+    name: jbig2enc @ ${{ inputs.jbig2enc_version }}
+    uses: ./.github/workflows/reusable-builder.yml
+    secrets: inherit
+    with:
+      dockerfile: ./jbig2enc.dockerfile
+      image-tag: ghcr.io/paperless-ngx/builder/jbig2enc:${{ inputs.jbig2enc_version }}
+      cache-tag: ghcr.io/paperless-ngx/builder/cache/jbig2enc:${{ inputs.jbig2enc_version }}
+      build-args: |
+        JBIG2ENC_VERSION=${{ inputs.jbig2enc_version }}
+
+  build-psycopg2-wheel:
+    name: psycopg2 @ ${{ inputs.psycopg2_version }}
+    uses: ./.github/workflows/reusable-builder.yml
+    secrets: inherit
+    with:
+      dockerfile: ./psycopg2.dockerfile
+      image-tag: ghcr.io/paperless-ngx/builder/psycopg2:${{ inputs.psycopg2_version }}
+      cache-tag: ghcr.io/paperless-ngx/builder/cache/psycopg2:${{ inputs.psycopg2_version }}
+      build-args: |
+        PSYCOPG2_VERSION=${{ inputs.psycopg2_version }}
+
+  build-pikepdf-wheel:
+    name: pikepdf @ ${{ inputs.pikepdf_version }}
+    needs:
+      - build-qpdf-debs
+    uses: ./.github/workflows/reusable-builder.yml
+    secrets: inherit
+    with:
+      dockerfile: ./pikepdf.dockerfile
+      image-tag: ghcr.io/paperless-ngx/builder/pikepdf:${{ inputs.pikepdf_version }}
+      cache-tag: ghcr.io/paperless-ngx/builder/cache/pikepdf:${{ inputs.pikepdf_version }}
+      build-args: |
+        QPDF_VERSION=${{ inputs.qpdf_version }}
+        PIKEPDF_VERSION=${{ inputs.pikepdf_version }}
+        PILLOW_VERSION=${{ inputs.pillow_version }}
+        LXML_VERSION=${{ inputs.lxml_version }}
+
+  commit-binary-files:
+    name: Store installers
+    needs:
+      - build-qpdf-debs
+      - build-jbig2enc
+      - build-psycopg2-wheel
+      - build-pikepdf-wheel
+    runs-on: ubuntu-22.04
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      -
+        name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qq --no-install-recommends tree
+      -
+        name: Clear old installers
+        run: |
+          rm --verbose --recursive --force pikepdf
+          rm --verbose --recursive --force jbig2enc
+          rm --verbose --recursive --force psycopg2
+          rm --verbose --recursive --force qpdf
+          sudo apt-get update -qq
+          sudo apt-get install -qq --no-install-recommends tree
+      -
+        name: Login to Github Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Extract qpdf files
+        run: |
+          version=${{ inputs.qpdf_version }}
+          tag=ghcr.io/paperless-ngx/builder/qpdf:${{ inputs.qpdf_version }}
+
+          docker pull --quiet ${tag}
+          docker create --name qpdf-extract ${tag}
+
+          mkdir --parents qpdf/${version}/amd64
+          docker cp qpdf-extract:/usr/src/qpdf/${version}/amd64 qpdf/${version}
+
+          mkdir --parents qpdf/${version}/arm64
+          docker cp qpdf-extract:/usr/src/qpdf/${version}/arm64 qpdf/${version}
+
+          mkdir --parents qpdf/${version}/armv7
+          docker cp qpdf-extract:/usr/src/qpdf/${version}/armv7 qpdf/${version}
+      -
+        name: Extract psycopg2 files
+        run: |
+          version=${{ inputs.psycopg2_version }}
+          tag=ghcr.io/paperless-ngx/builder/psycopg2:${{ inputs.psycopg2_version }}
+
+          docker pull --quiet --platform linux/amd64 ${tag}
+          docker create --platform linux/amd64 --name psycopg2-extract ${tag}
+          mkdir --parents psycopg2/${version}/amd64
+          docker cp psycopg2-extract:/usr/src/wheels/ psycopg2/${version}/amd64
+          mv psycopg2/${version}/amd64/wheels/* psycopg2/${version}/amd64
+          rm -r psycopg2/${version}/amd64/wheels/
+          docker rm psycopg2-extract
+
+          docker pull --quiet --platform linux/arm64 ${tag}
+          docker create --platform linux/arm64 --name psycopg2-extract ${tag}
+          mkdir --parents psycopg2/${version}/arm64
+          docker cp psycopg2-extract:/usr/src/wheels/ psycopg2/${version}/arm64
+          mv psycopg2/${version}/arm64/wheels/* psycopg2/${version}/arm64
+          rm -r psycopg2/${version}/arm64/wheels/
+          docker rm psycopg2-extract
+
+          docker pull --quiet --platform linux/arm/v7 ${tag}
+          docker create --platform linux/arm/v7 --name psycopg2-extract ${tag}
+          mkdir --parents psycopg2/${version}/armv7
+          docker cp psycopg2-extract:/usr/src/wheels/ psycopg2/${version}/armv7
+          mv psycopg2/${version}/armv7/wheels/* psycopg2/${version}/armv7
+          rm -r psycopg2/${version}/armv7/wheels/
+          docker rm psycopg2-extract
+      -
+        name: Extract pikepdf files
+        run: |
+          version=${{ inputs.pikepdf_version }}
+          tag=ghcr.io/paperless-ngx/builder/pikepdf:${{ inputs.pikepdf_version }}
+
+          docker pull --quiet --platform linux/amd64 ${tag}
+          docker create --platform linux/amd64 --name pikepdf-extract ${tag}
+          mkdir --parents pikepdf/${version}/amd64
+          docker cp pikepdf-extract:/usr/src/wheels/ pikepdf/${version}/amd64
+          mv pikepdf/${version}/amd64/wheels/* pikepdf/${version}/amd64
+          rm -r pikepdf/${version}/amd64/wheels/
+          docker rm pikepdf-extract
+
+          docker pull --quiet --platform linux/arm64 ${tag}
+          docker create --platform linux/arm64 --name pikepdf-extract ${tag}
+          mkdir --parents pikepdf/${version}/arm64
+          docker cp pikepdf-extract:/usr/src/wheels/ pikepdf/${version}/arm64
+          mv pikepdf/${version}/arm64/wheels/* pikepdf/${version}/arm64
+          rm -r pikepdf/${version}/arm64/wheels/
+          docker rm pikepdf-extract
+
+          docker pull --quiet --platform linux/arm/v7 ${tag}
+          docker create --platform linux/arm/v7 --name pikepdf-extract ${tag}
+          mkdir --parents pikepdf/${version}/armv7
+          docker cp pikepdf-extract:/usr/src/wheels/ pikepdf/${version}/armv7
+          mv pikepdf/${version}/armv7/wheels/* pikepdf/${version}/armv7
+          rm -r pikepdf/${version}/armv7/wheels/
+          docker rm pikepdf-extract
+      -
+        name: Extract jbig2enc files
+        run: |
+          version=${{ inputs.jbig2enc_version }}
+          tag=ghcr.io/paperless-ngx/builder/jbig2enc:${{ inputs.jbig2enc_version }}
+
+          docker pull --quiet --platform linux/amd64 ${tag}
+          docker create --platform linux/amd64 --name jbig2enc-extract ${tag}
+          mkdir --parents jbig2enc/${version}/amd64
+          docker cp jbig2enc-extract:/usr/src/jbig2enc/build jbig2enc/${version}/amd64/
+          mv jbig2enc/${version}/amd64/build/* jbig2enc/${version}/amd64/
+          docker rm jbig2enc-extract
+
+          docker pull --quiet --platform linux/arm64 ${tag}
+          docker create --platform linux/arm64 --name jbig2enc-extract ${tag}
+          mkdir --parents jbig2enc/${version}/arm64
+          docker cp jbig2enc-extract:/usr/src/jbig2enc/build jbig2enc/${version}/arm64
+          mv jbig2enc/${version}/arm64/build/* jbig2enc/${version}/arm64/
+          docker rm jbig2enc-extract
+
+          docker pull --quiet --platform linux/arm/v7 ${tag}
+          docker create --platform linux/arm/v7 --name jbig2enc-extract ${tag}
+          mkdir --parents jbig2enc/${version}/armv7
+          docker cp jbig2enc-extract:/usr/src/jbig2enc/build jbig2enc/${version}/armv7
+          mv jbig2enc/${version}/armv7/build/* jbig2enc/${version}/armv7/
+          docker rm jbig2enc-extract
+      -
+        name: Show file structure
+        run: |
+          tree .
+      -
+        name: Commit files
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pikepdf/ qpdf/ psycopg2/ jbig2enc/
+          git status
+          git commit -m "Updating installer packages" || true
+          git push origin || true
