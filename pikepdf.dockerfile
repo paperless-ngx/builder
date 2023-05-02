@@ -1,11 +1,9 @@
 # This Dockerfile builds the pikepdf wheel
 # Inputs:
-#    - REPO - Docker repository to pull qpdf from
 #    - QPDF_VERSION - The image qpdf version to copy .deb files from
 #    - PIKEPDF_VERSION - Version of pikepdf to build wheel for
-
-# Default to pulling from the main repo registry when manually building
-ARG REPO="paperless-ngx/paperless-ngx"
+#    - LXML_VERSION - pikepdf depends on lxml, set the version used
+#    - PILLOW_VERSION - pikepdf depends on pillow, set the version used
 
 # This does nothing, except provide a name for a copy below
 ARG QPDF_VERSION
@@ -30,8 +28,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Workflow provided
 ARG QPDF_VERSION
 ARG PIKEPDF_VERSION
-# These are not used, but will still bust the cache if one changes
-# Otherwise, the main image will try to build thing (and fail)
 ARG PILLOW_VERSION
 ARG LXML_VERSION
 
@@ -87,8 +83,10 @@ RUN set -eux \
   && echo "Building pikepdf wheel ${PIKEPDF_VERSION}" \
     && mkdir wheels \
     && python3 -m pip wheel \
-      # Build the package at the required version
+      # Build or get the package(s) at the required version
       pikepdf==${PIKEPDF_VERSION} \
+      lxml==${LXML_VERSION} \
+      pillow==${PILLOW_VERSION} \
       # Look to piwheels for additional pre-built wheels
       --extra-index-url https://www.piwheels.org/simple \
       # Output the *.whl into this directory
