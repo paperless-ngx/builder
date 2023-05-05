@@ -109,11 +109,6 @@ jobs:
         with:
           ref: binary-library
       -
-        name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.9"
-      -
         name: Install system dependencies
         run: |
           sudo apt-get update -qq
@@ -125,8 +120,6 @@ jobs:
           rm --verbose --recursive --force jbig2enc
           rm --verbose --recursive --force psycopg2
           rm --verbose --recursive --force qpdf
-          sudo apt-get update -qq
-          sudo apt-get install -qq --no-install-recommends tree
       -
         name: Login to Github Container Registry
         uses: docker/login-action@v2
