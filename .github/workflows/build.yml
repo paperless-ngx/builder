@@ -101,7 +101,6 @@ jobs:
 
   build-scipy-wheel:
     name: scipy @ ${{ inputs.scipy_version }}
-    if: false
     uses: ./.github/workflows/reusable-builder.yml
     secrets: inherit
     with:
