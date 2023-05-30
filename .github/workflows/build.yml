@@ -99,17 +99,17 @@ jobs:
         PILLOW_VERSION=${{ inputs.pillow_version }}
         LXML_VERSION=${{ inputs.lxml_version }}
 
-  build-scipy-wheel:
-    name: scipy @ ${{ inputs.scipy_version }}
-    if: false
-    uses: ./.github/workflows/reusable-builder.yml
-    secrets: inherit
-    with:
-      name: scipy
-      version: ${{ inputs.scipy_version }}
-      dockerfile: ./scipy.dockerfile
-      build-args: |
-        SCIPY_VERSION=${{ inputs.scipy_version }}
+  # build-scipy-wheel:
+  #   name: scipy @ ${{ inputs.scipy_version }}
+  #   if: false
+  #   uses: ./.github/workflows/reusable-builder.yml
+  #   secrets: inherit
+  #   with:
+  #     name: scipy
+  #     version: ${{ inputs.scipy_version }}
+  #     dockerfile: ./scipy.dockerfile
+  #     build-args: |
+  #       SCIPY_VERSION=${{ inputs.scipy_version }}
 
   commit-binary-files:
     name: Store installers
