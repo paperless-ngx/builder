@@ -29,6 +29,8 @@ RUN set -eux \
     && python3 -m pip --verbose wheel \
       # Build the package at the required version
       scipy==${SCIPY_VERSION} \
+      # Look to piwheels for additional pre-built wheels
+      --extra-index-url https://www.piwheels.org/simple \
       # Output the *.whl into this directory
       --wheel-dir wheels \
       # Do not use a binary packge for the package being built
