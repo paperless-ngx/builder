@@ -7,6 +7,7 @@ ARG BUILD_PACKAGES="\
   python3-pip\
   gfortran \
   libopenblas-dev \
+  libatlas-base-dev \
   liblapack-dev \
   pkg-config"
 
