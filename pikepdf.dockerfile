@@ -18,8 +18,6 @@ FROM --platform=linux/amd64 ghcr.io/paperless-ngx/builder/qpdf:${QPDF_VERSION} a
 #
 FROM python:3.9-slim-bullseye as builder
 
-LABEL org.opencontainers.image.description="A intermediate image with pikepdf wheel built"
-
 # Buildx provided
 ARG TARGETARCH
 ARG TARGETVARIANT
@@ -109,9 +107,11 @@ RUN set -eux \
 # Stage: package
 # Purpose: Holds the compiled .whl files in a tiny image to pull
 #
-FROM alpine:3.17 as package
+FROM alpine:3.18 as package
 
-WORKDIR /usr/src/wheels/
+LABEL org.opencontainers.image.description="A image with pikepdf wheel built in /usr/src/pikepdf/"
+
+WORKDIR /usr/src/pikepdf/
 
 COPY --from=builder /usr/src/wheels/*.whl ./
 COPY --from=builder /usr/src/wheels/pkg-list.txt ./

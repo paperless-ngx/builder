@@ -1,50 +1,43 @@
-# This Dockerfile builds the psycopg2 wheel
-# Inputs:
-#    - PSYCOPG2_VERSION - Version to build
 
-#
-# Stage: builder
-# Purpose:
-#  - Build the psycopg2 wheel
-#
 FROM python:3.9-slim-bullseye as builder
-
-ARG PSYCOPG2_VERSION
-ARG DEBIAN_FRONTEND=noninteractive
 
 ARG BUILD_PACKAGES="\
   build-essential \
   python3-dev \
-  python3-pip \
-  # https://www.psycopg.org/docs/install.html#prerequisites
-  libpq-dev"
+  python3-pip\
+  gfortran \
+  libopenblas-dev \
+  liblapack-dev \
+  pkg-config"
+
 
 WORKDIR /usr/src
-
-# As this is an base image for a multi-stage final image
-# the added size of the install is basically irrelevant
 
 RUN set -eux \
   && echo "Installing build tools" \
     && apt-get update --quiet \
     && apt-get install --yes --quiet --no-install-recommends ${BUILD_PACKAGES} \
   && echo "Installing Python tools" \
-    && python3 -m pip install --no-cache-dir --upgrade pip wheel \
-  && echo "Building psycopg2 wheel ${PSYCOPG2_VERSION}" \
+    && python3 -m pip install --no-cache-dir --upgrade pip wheel
+
+ARG SCIPY_VERSION
+
+RUN set -eux \
+  && echo "Building scipy wheel" \
     && cd /usr/src \
     && mkdir wheels \
-    && python3 -m pip wheel \
+    && python3 -m pip --verbose wheel \
       # Build the package at the required version
-      psycopg2==${PSYCOPG2_VERSION} \
+      scipy==${SCIPY_VERSION} \
       # Output the *.whl into this directory
       --wheel-dir wheels \
       # Do not use a binary packge for the package being built
-      --no-binary=psycopg2 \
+      --no-binary=scipy \
       # Do use binary packages for dependencies
       --prefer-binary \
       # Don't cache build files
       --no-cache-dir \
-    && ls -ahl wheels/ \
+    && ls -ahl wheels \
   && echo "Gathering package data" \
     && dpkg-query -f '${Package;-40}${Version}\n' -W > ./wheels/pkg-list.txt \
   && echo "Cleaning up image" \
@@ -58,9 +51,9 @@ RUN set -eux \
 #
 FROM alpine:3.18 as package
 
-LABEL org.opencontainers.image.description="A image with psycopg2 wheel built in /usr/src/psycopg2/"
+LABEL org.opencontainers.image.description="A image with scipy wheel built in /usr/src/scipy/"
 
-WORKDIR /usr/src/psycopg2/
+WORKDIR /usr/src/scipy/
 
 COPY --from=builder /usr/src/wheels/*.whl ./
 COPY --from=builder /usr/src/wheels/pkg-list.txt ./

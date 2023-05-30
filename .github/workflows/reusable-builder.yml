@@ -3,13 +3,13 @@ name: Reusable Image Builder
 on:
   workflow_call:
     inputs:
+      name:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
       dockerfile:
-        required: true
-        type: string
-      image-tag:
-        required: true
-        type: string
-      cache-tag:
         required: true
         type: string
       build-args:
@@ -48,9 +48,61 @@ jobs:
         with:
           context: .
           file: ${{ inputs.dockerfile }}
-          tags: ${{ inputs.image-tag }}
+          tags: ghcr.io/paperless-ngx/builder/${{ inputs.name }}:${{ inputs.version }}
           platforms: ${{ inputs.build-platforms }}
           build-args: ${{ inputs.build-args }}
           push: true
-          cache-from: ${{ inputs.cache-tag }}
-          cache-to: ${{ inputs.cache-tag }}
+          cache-from: ghcr.io/paperless-ngx/builder/cache/${{ inputs.name }}:${{ inputs.version }}
+          cache-to: ghcr.io/paperless-ngx/builder/cache/${{ inputs.name }}:${{ inputs.version }}
+      -
+        name: Package qpdf
+        if: inputs.name == 'qpdf'
+        run: |
+
+            docker pull --quiet ghcr.io/paperless-ngx/builder/${{ inputs.name }}:${{ inputs.version }}
+            docker create --name qpdf-extract ghcr.io/paperless-ngx/builder/${{ inputs.name }}:${{ inputs.version }}
+
+            mkdir --verbose --parents qpdf/${{ inputs.version }}/amd64
+            docker cp qpdf-extract:/usr/src/qpdf/${{ inputs.version }}/amd64 qpdf/${{ inputs.version }}
+
+            mkdir --verbose --parents qpdf/${{ inputs.version }}/arm64
+            docker cp qpdf-extract:/usr/src/qpdf/${{ inputs.version }}/arm64 qpdf/${{ inputs.version }}
+
+            mkdir --verbose --parents qpdf/${{ inputs.version }}/armv7
+            docker cp qpdf-extract:/usr/src/qpdf/${{ inputs.version }}/armv7 qpdf/${{ inputs.version }}
+      -
+        name: Package built files
+        if: inputs.name != 'qpdf'
+        run: |
+
+          for platform in "linux/amd64" "linux/arm64" "linux/arm/v7"
+          do
+            if [ ${platform} = "linux/amd64" ]; then
+              short_name="amd64"
+            elif [ ${platform} = "linux/arm64" ]; then
+              short_name="arm64"
+            else
+              short_name="armv7"
+            fi
+
+            docker pull --quiet --platform ${platform} ghcr.io/paperless-ngx/builder/${{ inputs.name }}:${{ inputs.version }}
+
+            docker create --platform ${platform} --name extract-container ghcr.io/paperless-ngx/builder/${{ inputs.name }}:${{ inputs.version }}
+
+            mkdir --verbose --parents ${{ inputs.name }}/${{ inputs.version }}/${short_name}
+
+            docker cp extract-container:/usr/src/${{ inputs.name }}/ ${{ inputs.name }}/${{ inputs.version }}/${short_name}/
+
+            mv --verbose ${{ inputs.name }}/${{ inputs.version }}/${short_name}/${{ inputs.name }}/* ${{ inputs.name }}/${{ inputs.version }}/${short_name}/
+
+            docker rm --force extract-container
+
+          done
+      -
+        name: Upload files
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.name }}-${{ inputs.version }}
+          path: ${{ inputs.name }}/
+          if-no-files-found: error
+          retention-days: 1

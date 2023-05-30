@@ -13,11 +13,11 @@ so the main image doesn't ever need to build a wheel or deb package itself.
 ## QPDF
 
 Debian Bullseye only provides 10.1.0. This is now a full version behind
-and missing performance enhancements, bug fixes etc.  In addition,
+and missing performance enhancements, bug fixes etc. In addition,
 pikepdf version 7 requires at least qpdf 11.2.
 
 In this repository, qpdf is cross-compiled from the Debian Bookworm
-source package.  It produces the .deb installer files for the
+source package. It produces the .deb installer files for the
 package, which can be installed on Bullseye.
 
 ## psycopg2
@@ -36,7 +36,7 @@ In this repository, psycopg2 is built as a wheel and linked against libpq-dev
 Nothing packages jbig2enc for installation, due to license issues (real or
 percived) and so it cannot be installed directly.
 
-In this repository, the last released version 0.29 is built.  It provides
+In this repository, the last released version 0.29 is built. It provides
 an executable and a library, neither of which are contained in a package file.
 
 ## pikepdf

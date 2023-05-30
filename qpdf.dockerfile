@@ -133,7 +133,7 @@ RUN set -eux \
 # Stage: package
 # Purpose: Holds the compiled .deb files in arch/variant specific folders
 #
-FROM alpine:3.17 as package
+FROM alpine:3.18 as package
 
 LABEL org.opencontainers.image.description="A image with qpdf installers stored in architecture & version specific folders"
 
