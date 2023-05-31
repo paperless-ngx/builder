@@ -1,5 +1,5 @@
 
-FROM python:3.9-slim-bullseye as builder
+FROM python:3.9-slim-bookworm as builder
 
 ARG BUILD_PACKAGES="\
   build-essential \

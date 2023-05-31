@@ -1,49 +1,42 @@
 # Builder
 
-Certain packages are either not built for ARMv7 or are too out of
-date in the Debian package repositories to be of use for building.
+Certain Python libraries used in paperless are either not built for
+ARMv7 or are out of date on PiWheels.
 
-In this repo, Docker and emulation are used to build and store installer
-packages. These are then grabbed at a specific revision for installation into
-main Docker image.
+In this repo, Docker images combined with emulation are used to build and store installer
+packages into a Git branch. The main image can then download the branch at a revision
+to retrieve the built artifacts at a particular version.
 
 Basically, this repository does the upfront work at infrequent intervals,
 so the main image doesn't ever need to build a wheel or deb package itself.
+And we can bypass piwheels issues due to its sometimes outdated builds.
 
 ## QPDF
 
-Debian Bullseye only provides 10.1.0. This is now a full version behind
-and missing performance enhancements, bug fixes etc. In addition,
-pikepdf version 7 requires at least qpdf 11.2.
-
-In this repository, qpdf is cross-compiled from the Debian Bookworm
-source package. It produces the .deb installer files for the
-package, which can be installed on Bullseye.
+The actions no longer build QPDF, as Debian Bookworm now provides qpdf 11.3.0,
+prebuilt, which is new enough for pikepdf to build against.
 
 ## psycopg2
 
 The pre-built wheels of psycopg2 were linked against a too old version
-of libpq-dev, resulting in connection failures. The version 13.9 in
-Debian Bullseye is new enough to resolve these failures.
+of libpq-dev, resulting in connection failures. See [#266](paperless-ngx/paperless-ngx/issues/266).
 
 There is also no viable ARMv7 wheel.
 
-In this repository, psycopg2 is built as a wheel and linked against libpq-dev
-13.9, the newer version provided by Bullseye.
+In this repository, psycopg2 is built as a wheel and linked against a newer
+version of libpq-dev, which resolves the issue.
 
 ## jbig2enc
 
 Nothing packages jbig2enc for installation, due to license issues (real or
-percived) and so it cannot be installed directly.
+perceived) and so it cannot be installed directly.
 
 In this repository, the last released version 0.29 is built. It provides
 an executable and a library, neither of which are contained in a package file.
 
 ## pikepdf
 
-The latest pikepdf versions depend on at least qpdf 11.2.0. As nothing
-packages that yet, the version built here is used for also building
-pikepdf.
+There is no ARMv7 wheel for pikepdf > v7.
 
 ## Building Installers
 

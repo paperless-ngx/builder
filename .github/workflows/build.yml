@@ -7,11 +7,6 @@ name: Build Installer Library
 on:
   workflow_dispatch:
     inputs:
-      qpdf_version:
-        description: 'qpdf version'
-        type: string
-        required: true
-        default: '11.3.0'
       pikepdf_version:
         description: 'pikepdf version'
         type: string
@@ -49,18 +44,6 @@ concurrency:
 
 jobs:
 
-  build-qpdf-debs:
-    name: qpdf @ ${{ inputs.qpdf_version }}
-    uses: ./.github/workflows/reusable-builder.yml
-    secrets: inherit
-    with:
-      name: qpdf
-      version: ${{ inputs.qpdf_version }}
-      dockerfile: ./qpdf.dockerfile
-      build-platforms: linux/amd64
-      build-args: |
-        QPDF_VERSION=${{ inputs.qpdf_version }}
-
   build-jbig2enc:
     name: jbig2enc @ ${{ inputs.jbig2enc_version }}
     uses: ./.github/workflows/reusable-builder.yml
@@ -85,8 +68,6 @@ jobs:
 
   build-pikepdf-wheel:
     name: pikepdf @ ${{ inputs.pikepdf_version }}
-    needs:
-      - build-qpdf-debs
     uses: ./.github/workflows/reusable-builder.yml
     secrets: inherit
     with:
@@ -94,7 +75,6 @@ jobs:
       version: ${{ inputs.pikepdf_version }}
       dockerfile: ./pikepdf.dockerfile
       build-args: |
-        QPDF_VERSION=${{ inputs.qpdf_version }}
         PIKEPDF_VERSION=${{ inputs.pikepdf_version }}
         PILLOW_VERSION=${{ inputs.pillow_version }}
         LXML_VERSION=${{ inputs.lxml_version }}
@@ -114,7 +94,6 @@ jobs:
   commit-binary-files:
     name: Store installers
     needs:
-      - build-qpdf-debs
       - build-jbig2enc
       - build-psycopg2-wheel
       - build-pikepdf-wheel
@@ -136,13 +115,6 @@ jobs:
           rm --verbose --recursive --force pikepdf
           rm --verbose --recursive --force jbig2enc
           rm --verbose --recursive --force psycopg2
-          rm --verbose --recursive --force qpdf
-      -
-        name: Download qpdf files
-        uses: actions/download-artifact@v3
-        with:
-          name: qpdf-${{ inputs.qpdf_version }}
-          path: ./qpdf
       -
         name: Download psycopg2 files
         uses: actions/download-artifact@v3

@@ -2,7 +2,7 @@
 # Inputs:
 #    - JBIG2ENC_VERSION - the Git tag to checkout and build
 
-FROM debian:bullseye-slim as builder
+FROM debian:bookworm-slim as builder
 
 LABEL org.opencontainers.image.description="A intermediate image with jbig2enc built"
 

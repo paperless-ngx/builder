@@ -10,7 +10,7 @@
 #  - https://wiki.debian.org/CrossCompiling
 #
 
-FROM debian:bullseye-slim as pre-build
+FROM debian:bookworm-slim as pre-build
 
 ARG QPDF_VERSION
 

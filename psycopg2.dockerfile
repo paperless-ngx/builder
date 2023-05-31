@@ -7,7 +7,7 @@
 # Purpose:
 #  - Build the psycopg2 wheel
 #
-FROM python:3.9-slim-bullseye as builder
+FROM python:3.9-slim-bookworm as builder
 
 ARG PSYCOPG2_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
