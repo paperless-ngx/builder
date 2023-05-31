@@ -1,14 +1,8 @@
 # This Dockerfile builds the pikepdf wheel
 # Inputs:
-#    - QPDF_VERSION - The image qpdf version to copy .deb files from
 #    - PIKEPDF_VERSION - Version of pikepdf to build wheel for
 #    - LXML_VERSION - pikepdf depends on lxml, set the version used
 #    - PILLOW_VERSION - pikepdf depends on pillow, set the version used
-
-# This does nothing, except provide a name for a copy below
-ARG QPDF_VERSION
-# hadolint ignore=DL3029
-FROM --platform=linux/amd64 ghcr.io/paperless-ngx/builder/qpdf:${QPDF_VERSION} as qpdf-builder
 
 #
 # Stage: builder
@@ -16,7 +10,7 @@ FROM --platform=linux/amd64 ghcr.io/paperless-ngx/builder/qpdf:${QPDF_VERSION} a
 #  - Build the pikepdf wheel
 #  - Build any dependent wheels which can't be found
 #
-FROM python:3.9-slim-bullseye as builder
+FROM python:3.9-slim-bookworm as builder
 
 # Buildx provided
 ARG TARGETARCH
@@ -24,17 +18,13 @@ ARG TARGETVARIANT
 
 ARG DEBIAN_FRONTEND=noninteractive
 # Workflow provided
-ARG QPDF_VERSION
 ARG PIKEPDF_VERSION
 ARG PILLOW_VERSION
 ARG LXML_VERSION
 
 ARG BUILD_PACKAGES="\
   build-essential \
-  python3-dev \
-  python3-pip \
-  # qpdf requirement - https://github.com/qpdf/qpdf#crypto-providers
-  libgnutls28-dev \
+  libqpdf-dev \
   # lxml requrements - https://lxml.de/installation.html
   libxml2-dev \
   libxslt1-dev \
@@ -60,8 +50,6 @@ ARG BUILD_PACKAGES="\
 
 WORKDIR /usr/src
 
-COPY --from=qpdf-builder /usr/src/qpdf/${QPDF_VERSION}/${TARGETARCH}${TARGETVARIANT}/*.deb ./
-
 # As this is an base image for a multi-stage final image
 # the added size of the install is basically irrelevant
 
@@ -69,9 +57,6 @@ RUN set -eux \
   && echo "Installing build tools" \
     && apt-get update --quiet \
     && apt-get install --yes --quiet --no-install-recommends ${BUILD_PACKAGES} \
-  && echo "Installing qpdf" \
-    && dpkg --install libqpdf29_*.deb \
-    && dpkg --install libqpdf-dev_*.deb \
   && echo "Installing Python tools" \
     && python3 -m pip install --no-cache-dir --upgrade \
       pip \

@@ -1,10 +1,8 @@
 
-FROM python:3.9-slim-bullseye as builder
+FROM python:3.9-slim-bookworm as builder
 
 ARG BUILD_PACKAGES="\
   build-essential \
-  python3-dev \
-  python3-pip\
   gfortran \
   libopenblas-dev \
   libatlas-base-dev \
