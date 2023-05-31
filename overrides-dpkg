@@ -1,0 +1,2 @@
+# Don't call sync() for every IO operation.
+force-unsafe-io

@@ -1,0 +1,21 @@
+# Disable creation of pkgcache.bin and srcpkgcache.bin to save space.
+Dir::Cache::pkgcache "";
+Dir::Cache::srcpkgcache "";
+
+# If there's a network error, retry up to 3 times.
+Acquire::Retries "3";
+
+# Don't download translations.
+Acquire::Languages "none";
+
+# Don't install Suggests or Recommends.
+Apt::Install-Suggests "false";
+Apt::Install-Recommends "false";
+
+# Remove suggested and recommended packages on autoremove.
+Apt::AutoRemove::SuggestsImportant "false";
+Apt::AutoRemove::RecommendsImportant "false";
+
+# Increase timeouts for aquisition
+Acquire::http::timeout "240";
+Acquire::https::timeout "240";
