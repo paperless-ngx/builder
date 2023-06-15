@@ -70,8 +70,6 @@ RUN set -eux \
       pikepdf==${PIKEPDF_VERSION} \
       lxml==${LXML_VERSION} \
       pillow==${PILLOW_VERSION} \
-      # Look to piwheels for additional pre-built wheels
-      --extra-index-url https://www.piwheels.org/simple \
       # Output the *.whl into this directory
       --wheel-dir wheels \
       # Do not use a binary packge for the package being built
