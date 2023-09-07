@@ -18,7 +18,7 @@ on:
         type: string
       build-platforms:
         required: false
-        default: linux/amd64,linux/arm64,linux/arm/v7
+        default: linux/amd64,linux/arm64
         type: string
 
 jobs:
@@ -58,7 +58,7 @@ jobs:
         name: Package built files
         run: |
 
-          for platform in "linux/amd64" "linux/arm64" "linux/arm/v7"
+          for platform in "linux/amd64" "linux/arm64"
           do
             if [ ${platform} = "linux/amd64" ]; then
               short_name="amd64"

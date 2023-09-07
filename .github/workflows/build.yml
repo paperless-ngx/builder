@@ -7,36 +7,16 @@ name: Build Installer Library
 on:
   workflow_dispatch:
     inputs:
-      pikepdf_version:
-        description: 'pikepdf version'
-        type: string
-        required: true
-        default: '7.2.0'
       psycopg2_version:
         description: 'psycopg2 version'
         type: string
         required: true
-        default: '2.9.6'
+        default: '2.9.7'
       jbig2enc_version:
         description: 'jbig2enc version'
         type: string
         required: true
         default: '0.29'
-      lxml_version:
-        description: 'lxml version'
-        type: string
-        required: true
-        default: '4.9.2'
-      pillow_version:
-        description: 'pillow version'
-        type: string
-        required: true
-        default: '9.5.0'
-      scipy_version:
-        description: 'scipy version'
-        type: string
-        required: true
-        default: '1.10.1'
 
 concurrency:
   group: build-installer-library
@@ -66,37 +46,11 @@ jobs:
       build-args: |
         PSYCOPG2_VERSION=${{ inputs.psycopg2_version }}
 
-  build-pikepdf-wheel:
-    name: pikepdf @ ${{ inputs.pikepdf_version }}
-    uses: ./.github/workflows/reusable-builder.yml
-    secrets: inherit
-    with:
-      name: pikepdf
-      version: ${{ inputs.pikepdf_version }}
-      dockerfile: ./pikepdf.dockerfile
-      build-args: |
-        PIKEPDF_VERSION=${{ inputs.pikepdf_version }}
-        PILLOW_VERSION=${{ inputs.pillow_version }}
-        LXML_VERSION=${{ inputs.lxml_version }}
-
-  # build-scipy-wheel:
-  #   name: scipy @ ${{ inputs.scipy_version }}
-  #   if: false
-  #   uses: ./.github/workflows/reusable-builder.yml
-  #   secrets: inherit
-  #   with:
-  #     name: scipy
-  #     version: ${{ inputs.scipy_version }}
-  #     dockerfile: ./scipy.dockerfile
-  #     build-args: |
-  #       SCIPY_VERSION=${{ inputs.scipy_version }}
-
   commit-binary-files:
     name: Store installers
     needs:
       - build-jbig2enc
       - build-psycopg2-wheel
-      - build-pikepdf-wheel
     runs-on: ubuntu-22.04
     steps:
       -
@@ -105,14 +59,8 @@ jobs:
         with:
           ref: binary-library
       -
-        name: Install system dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -qq --no-install-recommends tree
-      -
         name: Clear old installers
         run: |
-          rm --verbose --recursive --force pikepdf
           rm --verbose --recursive --force jbig2enc
           rm --verbose --recursive --force psycopg2
       -
@@ -121,12 +69,6 @@ jobs:
         with:
           name: psycopg2-${{ inputs.psycopg2_version }}
           path: ./psycopg2
-      -
-        name: Download pikepdf files
-        uses: actions/download-artifact@v3
-        with:
-          name: pikepdf-${{ inputs.pikepdf_version }}
-          path: ./pikepdf
       -
         name: Download jbig2enc files
         uses: actions/download-artifact@v3
@@ -142,7 +84,7 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pikepdf/ qpdf/ psycopg2/ jbig2enc/
+          git add psycopg2/ jbig2enc/
           git status
           git commit -m "Updating installer packages" || true
           git push origin || true
