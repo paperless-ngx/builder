@@ -9,11 +9,14 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 ARG COMMON_BUILD_PACKAGES="\
   wget \
+  debhelper \
   ca-certificates \
+  debian-keyring \
+  devscripts \
   dpkg-dev \
   debmake \
-  debhelper \
-  libtool"
+  equivs \
+  packaging-dev"
 
 ENV DEB_BUILD_OPTIONS="terse nocheck nodoc parallel=2"
 
@@ -50,7 +53,9 @@ RUN set -eux \
       && debmake \
       && dpkg-buildpackage --build=binary --unsigned-source --unsigned-changes --post-clean \
     && echo "Removing debug files" \
-      && rm -f ../*dbgsym*
+      && rm -f ../*dbgsym* \
+    && echo "Get build package versions" \
+      && dpkg-query -f '${Package;-40}${Version}\n' -W >../pkg-list.txt
 
 #
 # Stage: aarch64-builder
@@ -58,7 +63,7 @@ RUN set -eux \
 #  - Sets aarch64 specific environment
 #  - Builds qpdf for aarch64 (cross compile)
 #
-FROM amd64-builder as aarch64-builder
+FROM pre-build as aarch64-builder
 
 ARG ARM64_PACKAGES="\
   crossbuild-essential-arm64 \
@@ -78,4 +83,17 @@ RUN set -eux \
       && debmake \
       && dpkg-buildpackage --build=binary --unsigned-source --unsigned-changes --post-clean \
     && echo "Removing debug files" \
-      && rm -f ../*dbgsym*
+      && rm -f ../*dbgsym* \
+    && echo "Get build package versions" \
+      && dpkg-query -f '${Package;-40}${Version}\n' -W > ../pkg-list.txt
+
+FROM debian:bookworm-slim as package
+
+WORKDIR /usr/src/jbig2enc
+
+COPY --from=amd64-builder /usr/src/*.deb .
+COPY --from=amd64-builder /usr/src/pkg-list.txt amd64-pkg-list.txt
+COPY --from=aarch64-builder /usr/src/*.deb .
+COPY --from=aarch64-builder /usr/src/pkg-list.txt aarch64-pkg-list.txt
+
+ENTRYPOINT [ "/usr/bin/bash" ]
