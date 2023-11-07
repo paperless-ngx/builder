@@ -3,9 +3,8 @@
 # Purpose:
 #  - Installs common packages
 #  - Sets common environment variables related to dpkg
-#  - Aquires the qpdf source from bookwork
+#  - Aquires the ghostscript source from bookwork
 # Useful Links:
-#  - https://qpdf.readthedocs.io/en/stable/installation.html#system-requirements
 #  - https://wiki.debian.org/Multiarch/HOWTO
 #  - https://wiki.debian.org/CrossCompiling
 #
@@ -23,7 +22,7 @@ ARG COMMON_BUILD_PACKAGES="\
   equivs \
   packaging-dev"
 
-ENV DEB_BUILD_OPTIONS="terse nocheck nodoc parallel=2"
+ENV DEB_BUILD_OPTIONS="terse nocheck nodoc parallel=4"
 
 WORKDIR /usr/src
 
@@ -81,13 +80,15 @@ RUN set -eux \
     && echo "Building amd64" \
       && dpkg-buildpackage --build=binary --unsigned-source --unsigned-changes --post-clean \
     && echo "Removing debug files" \
-      && rm -f ../*dbgsym*
+      && rm -f ../*dbgsym* \
+    && echo "Get build package versions" \
+      && dpkg-query -f '${Package;-40}${Version}\n' -W > ../pkg-list.txt
 
 #
 # Stage: aarch64-builder
 # Purpose:
 #  - Sets aarch64 specific environment
-#  - Builds qpdf for aarch64 (cross compile)
+#  - Builds ghostscript for aarch64 (cross compile)
 #
 FROM pre-build as aarch64-builder
 
@@ -133,11 +134,17 @@ RUN set -eux \
     && echo "Building arm64" \
       && dpkg-buildpackage --build=binary --unsigned-source --unsigned-changes --post-clean --host-arch arm64 \
     && echo "Removing debug files" \
-      && rm -f ../*dbgsym*
+      && rm -f ../*dbgsym* \
+    && echo "Get build package versions" \
+      && dpkg-query -f '${Package;-40}${Version}\n' -W > ../pkg-list.txt
 
 FROM debian:bookworm-slim as package
 
 WORKDIR /usr/src/ghostscript
 
 COPY --from=amd64-builder /usr/src/*.deb .
+COPY --from=amd64-builder /usr/src/pkg-list.txt amd64-pkg-list.txt
 COPY --from=aarch64-builder /usr/src/*.deb .
+COPY --from=aarch64-builder /usr/src/pkg-list.txt aarch64-pkg-list.txt
+
+ENTRYPOINT [ "/usr/bin/bash" ]
