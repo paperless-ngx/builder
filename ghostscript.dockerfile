@@ -11,7 +11,7 @@
 
 FROM debian:bookworm-slim as pre-build
 
-ARG GS_VERSION=10.02.0
+ARG GS_VERSION=10.02.1
 
 ARG COMMON_BUILD_PACKAGES="\
   debhelper \
@@ -33,7 +33,7 @@ RUN set -eux \
   && echo "Getting ghostscript source" \
     && echo "deb-src http://deb.debian.org/debian/ trixie main" > /etc/apt/sources.list.d/trixie-src.list \
     && apt-get update --quiet \
-    && apt-get source --yes --quiet ghostscript=${GS_VERSION}~dfsg-2/trixie
+    && apt-get source --yes --quiet ghostscript=${GS_VERSION}~dfsg-1/trixie
 
 WORKDIR /usr/src/ghostscript-${GS_VERSION}~dfsg
 
@@ -75,7 +75,7 @@ RUN set -eux \
   && echo "Beginning amd64" \
     && echo "Install amd64 packages" \
       && apt-get update --quiet \
-      && apt-get build-dep --yes ghostscript=${GS_VERSION}~dfsg-2/trixie:amd64 \
+      && apt-get build-dep --yes ghostscript=${GS_VERSION}~dfsg-1/trixie:amd64 \
       && apt-get install --yes --quiet --no-install-recommends ${AMD64_BUILD_PACKAGES} \
     && echo "Building amd64" \
       && dpkg-buildpackage --build=binary --unsigned-source --unsigned-changes --post-clean \
