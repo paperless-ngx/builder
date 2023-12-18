@@ -39,6 +39,6 @@ providing a very recent version helps resolve problems with its outputs
     - `exit`
 1. Commit any changes to the Dockerfile for the tool
 1. Create a tag for the release
-    - `git tag ghostscript:10.02.1`
+    - `git tag ghostscript-10.02.1`
 1. Upload the built files to a [release](https://github.com/paperless-ngx/builder/releases)
 1. Update links in the main [Dockerfile](https://github.com/paperless-ngx/paperless-ngx/blob/dev/Dockerfile)
