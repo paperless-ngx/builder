@@ -12,7 +12,7 @@
 
 FROM debian:bookworm-slim as pre-build
 
-ARG QPDF_VERSION=11.6.4
+ARG QPDF_VERSION=11.9.0
 
 ARG COMMON_BUILD_PACKAGES="\
   cmake \
@@ -23,7 +23,13 @@ ARG COMMON_BUILD_PACKAGES="\
   dpkg-dev \
   equivs \
   packaging-dev \
-  libtool"
+  libtool \
+  python3-sphinx \
+  python3-sphinx-rtd-theme \
+  texlive \
+  texlive-latex-extra \
+  latexmk \
+  tex-gyre"
 
 ENV DEB_BUILD_OPTIONS="terse nocheck nodoc parallel=8"
 

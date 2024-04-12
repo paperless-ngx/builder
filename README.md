@@ -12,8 +12,7 @@ tool versions which (hopefully) include fixes, features and so on.
 
 ### QPDF
 
-This updates QPDF from 11.3.0 to 11.4.6.  Nothing directly uses QPDF, but
-pre/post consume might and more up to date seems good.
+Keeping a more updated version of QPDF
 
 ## jbig2enc
 
@@ -24,21 +23,11 @@ In this repository, the last released version 0.29 is built as a .deb installer.
 
 ## Ghostscript
 
-This updates Ghostscript from 10.0.0 to 10.02.1.  This includes some fixes and
-some security fixes as well.  As OCRMyPdf uses Ghostscript pretty extensively,
+This includes some fixes and some security fixes as well. As OCRMyPdf uses Ghostscript pretty extensively,
 providing a very recent version helps resolve problems with its outputs
 
 ## Building Installers
 
-1. Build an image from the Dockerfile for what you're trying to update.
-    - `docker build --tag ghostscript:10.02.1 --file ghostscript.dockerfile .`
-1. Run the image with a mount and copy out the build files
-    - Built files means either the .deb or .whl files
-    - `docker run --rm -it -v "$(pwd)":/data ghostscript:10.02.1`
-    - `cp *.deb /data/`
-    - `exit`
-1. Commit any changes to the Dockerfile for the tool
-1. Create a tag for the release
-    - `git tag ghostscript-10.02.1`
-1. Upload the built files to a [release](https://github.com/paperless-ngx/builder/releases)
-1. Update links in the main [Dockerfile](https://github.com/paperless-ngx/paperless-ngx/blob/dev/Dockerfile)
+1. Run `./build <thing> <version>
+
+- `./build.sh jbig2enc 0.29` for example
