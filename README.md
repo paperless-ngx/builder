@@ -31,3 +31,4 @@ providing a very recent version helps resolve problems with its outputs
 1. Run `./build <thing> <version>
 
 - `./build.sh jbig2enc 0.29` for example
+- Output files are copied to `output/`

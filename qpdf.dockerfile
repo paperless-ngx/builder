@@ -42,7 +42,7 @@ RUN set -eux \
   && echo "Getting qpdf source" \
     && echo "deb-src http://deb.debian.org/debian/ trixie main" > /etc/apt/sources.list.d/trixie-src.list \
     && apt-get update --quiet \
-    && apt-get source --yes --quiet qpdf=${QPDF_VERSION}-1/trixie
+    && apt-get source --yes --quiet qpdf=${QPDF_VERSION}-2/trixie
 
 WORKDIR /usr/src/qpdf-${QPDF_VERSION}
 
@@ -64,7 +64,7 @@ RUN set -eux \
       && apt-get update --quiet \
       && apt-get install --yes --quiet --no-install-recommends ${AMD64_BUILD_PACKAGES} \
     && echo "Building amd64" \
-      && dpkg-buildpackage --build=binary --unsigned-source --unsigned-changes --post-clean \
+      && dpkg-buildpackage --build=binary --unsigned-source --unsigned-changes --post-clean --no-check-builddeps \
     && echo "Removing debug files" \
       && rm -f ../*dbgsym* \
     && echo "Get build package versions" \
@@ -94,7 +94,7 @@ RUN set -eux \
       && apt-get update --quiet \
       && apt-get install --yes --quiet --no-install-recommends ${ARM64_PACKAGES} \
     && echo "Building arm64" \
-      && dpkg-buildpackage --build=binary --unsigned-source --unsigned-changes --post-clean --host-arch arm64 \
+      && dpkg-buildpackage --build=binary --unsigned-source --unsigned-changes --post-clean --no-check-builddeps --host-arch arm64 \
     && echo "Removing debug files" \
       && rm -f ../*dbgsym* \
     && echo "Get build package versions" \
