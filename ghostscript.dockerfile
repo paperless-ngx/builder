@@ -33,9 +33,9 @@ RUN set -eux \
   && echo "Getting ghostscript source" \
     && echo "deb-src http://deb.debian.org/debian/ trixie main" > /etc/apt/sources.list.d/trixie-src.list \
     && apt-get update --quiet \
-    && apt-get source --yes --quiet ghostscript=${GS_VERSION}~dfsg-3/trixie
+    && apt-get source --yes --quiet ghostscript=${GS_VERSION}~dfsg~git20240518-1/trixie
 
-WORKDIR /usr/src/ghostscript-${GS_VERSION}~dfsg
+WORKDIR /usr/src/ghostscript-${GS_VERSION}~dfsg~git20240518
 
 #
 # Stage: amd64-builder
@@ -75,7 +75,7 @@ RUN set -eux \
   && echo "Beginning amd64" \
     && echo "Install amd64 packages" \
       && apt-get update --quiet \
-      && apt-get build-dep --yes ghostscript=${GS_VERSION}~dfsg-3/trixie:amd64 \
+      && apt-get build-dep --yes ghostscript=${GS_VERSION}~dfsg~git20240518-1/trixie:amd64 \
       && apt-get install --yes --quiet --no-install-recommends ${AMD64_BUILD_PACKAGES} \
     && echo "Building amd64" \
       && dpkg-buildpackage --build=binary --unsigned-source --unsigned-changes --post-clean \
@@ -119,6 +119,7 @@ ARG ARM64_PACKAGES="\
   rename:arm64 \
   python3-sphinx \
   python3-sphinx-rtd-theme \
+  python3-sphinx-copybutton \
   zlib1g-dev \
   rst2pdf"
 
