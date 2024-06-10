@@ -43,7 +43,7 @@ subcommand=$1
 case "${subcommand}" in
 
 	qpdf)
-		build_qpdf "${2:-11.9.0}"
+		build_qpdf "${2:-11.9.1}"
 		;;
 
 	ghostscript)

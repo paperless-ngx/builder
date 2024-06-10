@@ -12,7 +12,7 @@
 
 FROM debian:bookworm-slim as pre-build
 
-ARG QPDF_VERSION=11.9.0
+ARG QPDF_VERSION=11.9.1
 
 ARG COMMON_BUILD_PACKAGES="\
   cmake \
@@ -42,7 +42,7 @@ RUN set -eux \
   && echo "Getting qpdf source" \
     && echo "deb-src http://deb.debian.org/debian/ trixie main" > /etc/apt/sources.list.d/trixie-src.list \
     && apt-get update --quiet \
-    && apt-get source --yes --quiet qpdf=${QPDF_VERSION}-2/trixie
+    && apt-get source --yes --quiet qpdf=${QPDF_VERSION}-1/trixie
 
 WORKDIR /usr/src/qpdf-${QPDF_VERSION}
 
