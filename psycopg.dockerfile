@@ -7,7 +7,7 @@
 # Purpose:
 #  - Build the psycopg wheel
 #
-FROM python:3.11-slim-bookworm AS builder
+FROM python:3.12-slim-bookworm AS builder
 
 ARG PSYCOPG_VERSION=3.2.2
 ARG DEBIAN_FRONTEND=noninteractive
@@ -55,7 +55,7 @@ RUN set -eux \
 # Stage: package
 # Purpose: Holds the compiled .whl files in a tiny image to pull
 #
-FROM alpine:latest AS package
+FROM scratch AS package
 
 LABEL org.opencontainers.image.description="A image with psycopg wheel built in /usr/src/psycopg/"
 

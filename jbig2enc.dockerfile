@@ -87,7 +87,7 @@ RUN set -eux \
     && echo "Get build package versions" \
       && dpkg-query -f '${Package;-40}${Version}\n' -W > ../pkg-list.txt
 
-FROM debian:bookworm-slim as package
+FROM scratch as package
 
 WORKDIR /usr/src/jbig2enc
 
