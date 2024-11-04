@@ -55,7 +55,7 @@ case "${subcommand}" in
 		;;
 
 	psycopg)
-		build_psycopg "${2:-3.2.2}"
+		build_psycopg "${2:-3.2.3}"
 		;;
 
 	*)

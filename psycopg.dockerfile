@@ -9,7 +9,7 @@
 #
 FROM python:3.12-slim-bookworm AS builder
 
-ARG PSYCOPG_VERSION=3.2.2
+ARG PSYCOPG_VERSION=3.2.3
 ARG DEBIAN_FRONTEND=noninteractive
 
 ARG BUILD_PACKAGES="\
@@ -63,3 +63,5 @@ WORKDIR /usr/src/psycopg/
 
 COPY --from=builder /usr/src/wheels/*.whl ./
 COPY --from=builder /usr/src/wheels/pkg-list.txt ./
+
+ENTRYPOINT [ "/usr/bin/bash" ]
