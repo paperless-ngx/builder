@@ -56,7 +56,7 @@ case "${subcommand}" in
 		;;
 
 	ghostscript)
-		build_ghostscript "${2:-10.03.1}"
+		build_ghostscript "${2:-10.04.0}"
 		;;
 
 	jbig2enc)
