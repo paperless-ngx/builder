@@ -38,6 +38,15 @@ function build_psycopg()
 	docker cp "${image_id}":/usr/src/psycopg/ outputs/
 }
 
+function build_zxing()
+{
+	local -r image_tag="zxing:${1}"
+	docker build --tag "${image_tag}" --build-arg ZXING_VERSION="${1}" --file zxing.dockerfile --progress plain .
+	image_id=$(docker create "${image_tag}")
+	mkdir -v -p outputs/zxing
+	docker cp "${image_id}":/usr/src/zxing/ outputs/
+}
+
 subcommand=$1
 
 case "${subcommand}" in
@@ -56,6 +65,10 @@ case "${subcommand}" in
 
 	psycopg)
 		build_psycopg "${2:-3.2.4}"
+		;;
+
+	zxing)
+		build_zxing "${2:-2.3.0}"
 		;;
 
 	*)

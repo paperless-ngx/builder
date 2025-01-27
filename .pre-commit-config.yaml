@@ -28,7 +28,7 @@ repos:
       - id: detect-private-key
   # See https://github.com/prettier/prettier/issues/15742 for the fork reason
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.3.3"
+    rev: "v3.4.2"
     hooks:
       - id: prettier
         types_or:
