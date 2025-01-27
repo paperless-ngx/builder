@@ -3,7 +3,7 @@
 # Purpose:
 #  - Installs common packages
 #  - Sets common environment variables related to dpkg
-#  - Aquires the qpdf source from bookwork
+#  - Acquires the qpdf source from trixie
 # Useful Links:
 #  - https://qpdf.readthedocs.io/en/stable/installation.html#system-requirements
 #  - https://wiki.debian.org/Multiarch/HOWTO

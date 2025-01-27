@@ -4,7 +4,7 @@
 # Purpose:
 #  - Installs common packages
 #  - Sets common environment variables related to dpkg
-#  - Aquires the ghostscript source from bookwork
+#  - Acquires the ghostscript source from bookwork
 # Useful Links:
 #  - https://wiki.debian.org/Multiarch/HOWTO
 #  - https://wiki.debian.org/CrossCompiling
