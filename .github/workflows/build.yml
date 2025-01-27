@@ -16,7 +16,7 @@ on:
         description: 'jbig2enc version'
         type: string
         required: true
-        default: '0.29'
+        default: '0.30'
 
 concurrency:
   group: build-installer-library

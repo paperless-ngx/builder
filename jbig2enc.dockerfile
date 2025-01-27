@@ -4,7 +4,7 @@
 
 FROM debian:bookworm-slim as pre-build
 
-ARG JBIG2ENC_VERSION=0.29
+ARG JBIG2ENC_VERSION=0.30
 ARG DEBIAN_FRONTEND=noninteractive
 
 ARG COMMON_BUILD_PACKAGES="\
@@ -28,7 +28,7 @@ RUN set -eux \
     && apt-get install --yes --quiet --no-install-recommends ${COMMON_BUILD_PACKAGES} \
   && echo "Getting qpdf source" \
     && wget --quiet https://github.com/agl/jbig2enc/archive/refs/tags/${JBIG2ENC_VERSION}.tar.gz \
-    && mv 0.29.tar.gz jbig2enc-${JBIG2ENC_VERSION}.tar.gz\
+    && mv 0.30.tar.gz jbig2enc-${JBIG2ENC_VERSION}.tar.gz\
     && tar -xzmf jbig2enc-${JBIG2ENC_VERSION}.tar.gz
 
 WORKDIR /usr/src/jbig2enc-${JBIG2ENC_VERSION}

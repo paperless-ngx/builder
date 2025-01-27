@@ -19,7 +19,7 @@ Keeping a more updated version of QPDF
 Nothing packages jbig2enc for installation, due to license issues (real or
 perceived) and so it cannot be installed directly.
 
-In this repository, the last released version 0.29 is built as a .deb installer.
+In this repository, the last released version 0.30 is built as a .deb installer.
 
 ## Ghostscript
 
@@ -30,5 +30,5 @@ providing a very recent version helps resolve problems with its outputs
 
 1. Run `./build <thing> <version>
 
-- `./build.sh jbig2enc 0.29` for example
+- `./build.sh jbig2enc 0.30` for example
 - Output files are copied to `output/`
