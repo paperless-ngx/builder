@@ -2,7 +2,7 @@
 # Inputs:
 #    - JBIG2ENC_VERSION - the Git tag to checkout and build
 
-FROM debian:bookworm-slim as pre-build
+FROM debian:bookworm-slim AS pre-build
 
 ARG JBIG2ENC_VERSION=0.30
 ARG DEBIAN_FRONTEND=noninteractive
@@ -37,7 +37,7 @@ WORKDIR /usr/src/jbig2enc-${JBIG2ENC_VERSION}
 # Stage: amd64-builder
 # Purpose: Builds qpdf for x86_64 (native build)
 #
-FROM pre-build as amd64-builder
+FROM pre-build AS amd64-builder
 
 ARG AMD64_BUILD_PACKAGES="\
   build-essential \
@@ -63,7 +63,7 @@ RUN set -eux \
 #  - Sets aarch64 specific environment
 #  - Builds qpdf for aarch64 (cross compile)
 #
-FROM pre-build as aarch64-builder
+FROM pre-build AS aarch64-builder
 
 ARG ARM64_PACKAGES="\
   crossbuild-essential-arm64 \
@@ -87,7 +87,7 @@ RUN set -eux \
     && echo "Get build package versions" \
       && dpkg-query -f '${Package;-40}${Version}\n' -W > ../pkg-list.txt
 
-FROM scratch as package
+FROM scratch AS package
 
 WORKDIR /usr/src/jbig2enc
 
