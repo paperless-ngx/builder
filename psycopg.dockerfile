@@ -9,7 +9,7 @@
 #
 FROM python:3.12-slim-bookworm AS builder
 
-ARG PSYCOPG_VERSION=3.2.4
+ARG PSYCOPG_VERSION=3.2.5
 ARG DEBIAN_FRONTEND=noninteractive
 
 ARG BUILD_PACKAGES="\
