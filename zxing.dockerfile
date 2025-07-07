@@ -9,7 +9,7 @@
 #
 FROM python:3.12-slim-bookworm AS builder
 
-ARG ZXING_VERSION=2.3.0
+ARG ZXING_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 
 ARG BUILD_PACKAGES="\

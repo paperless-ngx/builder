@@ -1,0 +1,96 @@
+name: Build ZXing Wheels
+permissions:
+  contents: read
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'ZXing version to build'
+        required: true
+        type: string
+        default: "2.3.0"
+      testing:
+        description: 'Testing mode (build only, no release)'
+        required: false
+        type: boolean
+        default: false
+env:
+  INPUTS_VERSION: ${{ inputs.version }}
+jobs:
+  build-zxing:
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+          - runner: ubuntu-24.04
+            arch: x86_64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build zxing Docker image
+        run: |
+          docker build \
+            --tag "zxing:${{ env.INPUTS_VERSION }}" \
+            --build-arg ZXING_VERSION="${{ env.INPUTS_VERSION }}" \
+            --file zxing.dockerfile \
+            --progress plain \
+            .
+      - name: Extract built wheels
+        run: |
+          image_id=$(docker create "zxing:${{ env.INPUTS_VERSION }}")
+          mkdir -v -p outputs/zxing
+          docker cp "${image_id}":/usr/src/zxing/ outputs/
+
+          # List built files for verification
+          find outputs/zxing -type f -name "*.whl" -o -name "*.tar.gz" | sort
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zxing-wheels-${{ inputs.version }}-${{ matrix.arch }}
+          path: outputs/zxing/
+          retention-days: 7
+  create-release:
+    if: ${{ !inputs.testing }}
+    needs: build-zxing
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      - name: Prepare release artifacts
+        run: |
+          mkdir -p release-artifacts
+          find artifacts/ -name "*.whl" -o -name "*.tar.gz" | while read file; do
+            cp "$file" release-artifacts/
+          done
+          ls -la release-artifacts/
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: zxing-${{ inputs.version }}
+          commit: ${{ github.sha }}
+          name: "ZXing ${{ inputs.version }} (Multi-arch)"
+          artifacts: "release-artifacts/*"
+          prerelease: true
+          draft: false
+          replacesArtifacts: true
+          removeArtifacts: true
+          allowUpdates: true
+          body: |
+            ## ZXing ${{ inputs.version }} Multi-architecture Wheels
+            **Version:** ${{ inputs.version }}
+            **Build Date:** ${{ steps.date.outputs.date }}
+            **Commit:** ${{ github.sha }}
+            **Actor:** ${{ github.actor }}
