@@ -1,7 +1,6 @@
 # This file configures pre-commit hooks.
 # See https://pre-commit.com/ for general information
 # See https://pre-commit.com/hooks.html for a listing of possible hooks
-
 repos:
   # General hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -28,7 +27,7 @@ repos:
       - id: detect-private-key
   # See https://github.com/prettier/prettier/issues/15742 for the fork reason
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.4.2"
+    rev: "v3.6.2"
     hooks:
       - id: prettier
         types_or:
@@ -53,3 +52,11 @@ repos:
     rev: "v0.10.0.1"
     hooks:
       - id: shellcheck
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.17.2
+    hooks:
+      - id: yamlfmt
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.11.0
+    hooks:
+      - id: zizmor

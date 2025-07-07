@@ -1,0 +1,93 @@
+name: Build Psycopg Wheels
+permissions:
+  contents: read
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Psycopg version to build'
+        required: true
+        type: string
+      testing:
+        description: 'Testing mode (build only, no release)'
+        required: false
+        type: boolean
+        default: false
+jobs:
+  build-psycopg:
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest-arm64
+            arch: arm64
+          - runner: ubuntu-latest
+            arch: x86_64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build psycopg Docker image
+        run: |
+          docker build \
+            --tag "psycopg:${INPUTS_VERSION}" \
+            --build-arg PSYCOPG_VERSION="${INPUTS_VERSION}" \
+            --file psycopg.dockerfile \
+            --progress plain \
+            .
+        env:
+          INPUTS_VERSION: ${{ inputs.version }}
+      - name: Extract built wheels
+        run: |
+          image_id=$(docker create "psycopg:${INPUTS_VERSION}")
+          mkdir -v -p outputs/psycopg
+          docker cp "${image_id}":/usr/src/psycopg/ outputs/
+
+          # List built files for verification
+          find outputs/psycopg -type f -name "*.whl" -o -name "*.tar.gz" | sort
+        env:
+          INPUTS_VERSION: ${{ inputs.version }}
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: psycopg-wheels-${{ inputs.version }}-${{ matrix.arch }}
+          path: outputs/psycopg/
+          retention-days: 7
+  create-release:
+    if: ${{ !inputs.testing }}
+    needs: build-psycopg
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      - name: Prepare release artifacts
+        run: |
+          mkdir -p release-artifacts
+          find artifacts/ -name "*.whl" -o -name "*.tar.gz" | while read file; do
+            cp "$file" release-artifacts/
+          done
+          ls -la release-artifacts/
+      - name: Create pre-release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: psycopg-${{ inputs.version }}
+          name: "Psycopg ${{ inputs.version }} (Multi-arch)"
+          artifacts: "release-artifacts/*"
+          prerelease: true
+          draft: false
+          generateReleaseNotes: true
+          body: |
+            ## Psycopg ${{ inputs.version }} Multi-architecture Wheels
+
+            Built natively on both ARM64 and x86_64 runners for improved performance.
+
+            **Version:** ${{ inputs.version }}
+            **Architectures:** ARM64, x86_64
+            **Build Date:** ${{ github.run_id }}

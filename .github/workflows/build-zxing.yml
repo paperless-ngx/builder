@@ -1,0 +1,93 @@
+name: Build ZXing Wheels
+permissions:
+  contents: read
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'ZXing version to build'
+        required: true
+        type: string
+      testing:
+        description: 'Testing mode (build only, no release)'
+        required: false
+        type: boolean
+        default: false
+jobs:
+  build-zxing:
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest-arm64
+            arch: arm64
+          - runner: ubuntu-latest
+            arch: x86_64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build zxing Docker image
+        run: |
+          docker build \
+            --tag "zxing:${INPUTS_VERSION}" \
+            --build-arg ZXING_VERSION="${INPUTS_VERSION}" \
+            --file zxing.dockerfile \
+            --progress plain \
+            .
+        env:
+          INPUTS_VERSION: ${{ inputs.version }}
+      - name: Extract built wheels
+        run: |
+          image_id=$(docker create "zxing:${INPUTS_VERSION}")
+          mkdir -v -p outputs/zxing
+          docker cp "${image_id}":/usr/src/zxing/ outputs/
+
+          # List built files for verification
+          find outputs/zxing -type f -name "*.whl" -o -name "*.tar.gz" | sort
+        env:
+          INPUTS_VERSION: ${{ inputs.version }}
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zxing-wheels-${{ inputs.version }}-${{ matrix.arch }}
+          path: outputs/zxing/
+          retention-days: 7
+  create-release:
+    if: ${{ !inputs.testing }}
+    needs: build-zxing
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      - name: Prepare release artifacts
+        run: |
+          mkdir -p release-artifacts
+          find artifacts/ -name "*.whl" -o -name "*.tar.gz" | while read file; do
+            cp "$file" release-artifacts/
+          done
+          ls -la release-artifacts/
+      - name: Create pre-release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: zxing-${{ inputs.version }}
+          name: "ZXing ${{ inputs.version }} (Multi-arch)"
+          artifacts: "release-artifacts/*"
+          prerelease: true
+          draft: false
+          generateReleaseNotes: true
+          body: |
+            ## ZXing ${{ inputs.version }} Multi-architecture Wheels
+
+            Built natively on both ARM64 and x86_64 runners for improved performance.
+
+            **Version:** ${{ inputs.version }}
+            **Architectures:** ARM64, x86_64
+            **Build Date:** ${{ github.run_id }}
