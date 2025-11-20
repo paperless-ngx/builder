@@ -32,7 +32,7 @@ RUN set -eux \
     && apt-get install --yes --quiet --no-install-recommends ${BUILD_PACKAGES} \
     && mkdir -p /usr/share/postgresql-common/pgdg/ \
     && curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-    && echo 'deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${DEBIAN_RELEASE}-pgdg main' > /etc/apt/sources.list.d/pgdg.list \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${DEBIAN_RELEASE}-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
     && apt-get update \
     && apt-get install --yes --quiet --no-install-recommends libpq-dev \
   && echo "Installing Python tools" \
