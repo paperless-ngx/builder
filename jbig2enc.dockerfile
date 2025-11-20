@@ -2,8 +2,8 @@
 #
 # Inputs:
 #    - JBIG2ENC_VERSION - The Git tag to checkout and build
-
-FROM debian:trixie-slim
+ARG DEBIAN_RELEASE="bookworm"
+FROM debian:${DEBIAN_RELEASE}-slim
 
 ARG JBIG2ENC_VERSION=0.30
 ARG DEBIAN_FRONTEND=noninteractive

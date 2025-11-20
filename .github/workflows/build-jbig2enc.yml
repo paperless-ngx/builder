@@ -9,6 +9,12 @@ on:
         required: true
         type: string
         default: "0.30"
+      debian-release:
+        description: "Debian release to use"
+        type: choice
+        options:
+          - bookworm
+          - trixie
       testing:
         description: 'Testing mode (build only, no release)'
         required: false
@@ -17,6 +23,7 @@ on:
 env:
   # Make the input version available to all jobs
   JBIG2ENC_VERSION: ${{ inputs.version }}
+  DEBIAN_RELEASE: ${{ inputs.debian-release }}
 jobs:
   # Job to build the .deb package for each architecture
   build-deb-package:
@@ -39,16 +46,15 @@ jobs:
       - name: Build jbig2enc Docker image
         run: |
           docker build \
-            --tag "jbig2enc:${JBIG2ENC_VERSION}-${{ matrix.arch }}" \
-            --build-arg JBIG2ENC_VERSION="${JBIG2ENC_VERSION}" \
+            --tag "jbig2enc:${{ env.JBIG2ENC_VERSION }}-${{ matrix.arch }}" \
+            --build-arg DEBIAN_RELEASE="${{ env.DEBIAN_RELEASE }}" \
+            --build-arg JBIG2ENC_VERSION="${{ env.JBIG2ENC_VERSION }}" \
             --file jbig2enc.dockerfile \
             --progress plain \
             .
-        env:
-          JBIG2ENC_VERSION: ${{ env.JBIG2ENC_VERSION }}
       - name: Extract built .deb package
         run: |
-          image_id=$(docker create "jbig2enc:${JBIG2ENC_VERSION}-${{ matrix.arch }}")
+          image_id=$(docker create "jbig2enc:${{ env.JBIG2ENC_VERSION }}-${{ matrix.arch }}")
           mkdir -p outputs/jbig2enc
           # Copy the built .deb files from the container to the host
           docker cp "${image_id}":/usr/src/jbig2enc/ outputs/
@@ -56,8 +62,6 @@ jobs:
           docker rm "${image_id}"
           echo "Extracted files:"
           find outputs/jbig2enc -name "*.deb"
-        env:
-          JBIG2ENC_VERSION: ${{ env.JBIG2ENC_VERSION }}
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -89,7 +93,7 @@ jobs:
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          tag: jbig2enc-v${{ env.JBIG2ENC_VERSION }}
+          tag: jbig2enc-${{ env.DEBIAN_RELEASE }}-v${{ env.JBIG2ENC_VERSION }}
           commit: ${{ github.sha }}
           name: "jbig2enc v${{ env.JBIG2ENC_VERSION }} (Multi-arch)"
           artifacts: "release-artifacts/*.deb"
