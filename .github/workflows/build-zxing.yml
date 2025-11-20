@@ -9,6 +9,12 @@ on:
         required: true
         type: string
         default: "2.3.0"
+      debian-release:
+        description: "Debian release to use"
+        type: choice
+        options:
+          - bookworm
+          - trixie
       testing:
         description: 'Testing mode (build only, no release)'
         required: false
@@ -16,6 +22,7 @@ on:
         default: false
 env:
   INPUTS_VERSION: ${{ inputs.version }}
+  DEBIAN_RELEASE: ${{ inputs.debian-release }}
 jobs:
   build-zxing:
     runs-on: ${{ matrix.runner }}
@@ -37,6 +44,7 @@ jobs:
         run: |
           docker build \
             --tag "zxing:${{ env.INPUTS_VERSION }}" \
+            --build-arg DEBIAN_RELEASE="${{ env.DEBIAN_RELEASE }}" \
             --build-arg ZXING_VERSION="${{ env.INPUTS_VERSION }}" \
             --file zxing.dockerfile \
             --progress plain \
@@ -79,7 +87,7 @@ jobs:
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
-          tag: zxing-${{ inputs.version }}
+          tag: zxing-${{ env.DEBIAN_RELEASE }}-${{ inputs.version }}
           commit: ${{ github.sha }}
           name: "ZXing ${{ inputs.version }} (Multi-arch)"
           artifacts: "release-artifacts/*"

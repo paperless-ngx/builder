@@ -7,7 +7,8 @@
 # Purpose:
 #  - Build the zxing wheel
 #
-FROM python:3.12-slim-bookworm AS builder
+ARG DEBIAN_RELEASE="bookworm"
+FROM python:3.12-slim-${DEBIAN_RELEASE} AS builder
 
 ARG ZXING_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
