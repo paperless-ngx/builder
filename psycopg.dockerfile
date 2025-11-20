@@ -12,6 +12,7 @@ FROM python:3.12-slim-${DEBIAN_RELEASE} AS builder
 
 ARG PSYCOPG_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_RELEASE="bookworm"
 
 ARG BUILD_PACKAGES="\
   build-essential \
