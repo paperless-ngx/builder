@@ -8,7 +8,13 @@ on:
         description: 'Psycopg version to build'
         required: true
         type: string
-        default: "3.2.9"
+        default: "3.2.12"
+      debian-release:
+        description: "Debian release to use"
+        type: choice
+        options:
+          - bookworm
+          - trixie
       testing:
         description: 'Testing mode (build only, no release)'
         required: false
@@ -16,6 +22,7 @@ on:
         default: false
 env:
   INPUTS_VERSION: ${{ inputs.version }}
+  DEBIAN_RELEASE: ${{ inputs.debian-release }}
 jobs:
   build-psycopg:
     runs-on: ${{ matrix.runner }}
@@ -37,6 +44,7 @@ jobs:
         run: |
           docker build \
             --tag "psycopg:${{ env.INPUTS_VERSION }}" \
+            --build-arg DEBIAN_RELEASE="${{ env.DEBIAN_RELEASE }}" \
             --build-arg PSYCOPG_VERSION="${{ env.INPUTS_VERSION }}" \
             --file psycopg.dockerfile \
             --progress plain \
@@ -79,7 +87,7 @@ jobs:
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
-          tag: psycopg-${{ inputs.version }}
+          tag: psycopg-${{ env.DEBIAN_RELEASE }}-${{ inputs.version }}
           commit: ${{ github.sha }}
           name: "Psycopg ${{ inputs.version }} (Multi-arch)"
           artifacts: "release-artifacts/*"

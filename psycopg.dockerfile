@@ -7,15 +7,16 @@
 # Purpose:
 #  - Build the psycopg wheel
 #
-FROM python:3.12-slim-bookworm AS builder
+ARG DEBIAN_RELEASE="bookworm"
+FROM python:3.12-slim-${DEBIAN_RELEASE} AS builder
 
 ARG PSYCOPG_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 
 ARG BUILD_PACKAGES="\
   build-essential \
-  # https://www.psycopg.org/docs/install.html#prerequisites
-  libpq-dev"
+  curl \
+  ca-certificates"
 
 WORKDIR /usr/src
 
@@ -26,6 +27,11 @@ RUN set -eux \
   && echo "Installing build tools" \
     && apt-get update --quiet \
     && apt-get install --yes --quiet --no-install-recommends ${BUILD_PACKAGES} \
+    && mkdir -p /usr/share/postgresql-common/pgdg/ \
+    && curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+    && echo 'deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${DEBIAN_RELEASE}-pgdg main' > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install --yes --quiet --no-install-recommends libpq-dev \
   && echo "Installing Python tools" \
     && python3 -m pip install --no-cache-dir --upgrade pip wheel \
   && echo "Building psycopg wheel ${PSYCOPG_VERSION}" \
@@ -39,7 +45,6 @@ RUN set -eux \
       # Do not use a binary packge for the package being built
       --no-binary=psycopg \
       --no-binary="psycopg-c" \
-      --no-binary="psycopg-pool" \
       # Do use binary packages for dependencies
       --prefer-binary \
       # Don't cache build files
