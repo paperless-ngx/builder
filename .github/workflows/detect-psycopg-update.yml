@@ -1,0 +1,103 @@
+name: Detect Psycopg Update
+permissions:
+  contents: read
+on:
+  schedule:
+    # Monthly, on the 1st at 06:00 UTC, to line up with the monthly dep cadence
+    - cron: "0 6 1 * *"
+  workflow_dispatch:
+env:
+  DEBIAN_RELEASE: trixie
+concurrency:
+  group: detect-psycopg-update
+  cancel-in-progress: false
+jobs:
+  detect:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write # push the update branch
+      pull-requests: write # open the PR
+      actions: write # dispatch the test build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need tags to find the current version
+          persist-credentials: true # used to push the update branch
+      - name: Determine versions
+        id: versions
+        run: python3 scripts/check_psycopg_version.py
+      - name: Check for existing branch or PR
+        id: existing
+        if: steps.versions.outputs.should_update == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.versions.outputs.latest }}
+        run: |
+          branch="psycopg-update-${VERSION}"
+          skip=false
+          if git ls-remote --exit-code --heads origin "${branch}" >/dev/null 2>&1; then
+            echo "Branch ${branch} already exists; skipping."
+            skip=true
+          elif [ -n "$(gh pr list --head "${branch}" --state all --json number --jq '.[].number')" ]; then
+            echo "A PR for ${branch} already exists; skipping."
+            skip=true
+          fi
+          echo "branch=${branch}" >> "${GITHUB_OUTPUT}"
+          echo "skip=${skip}" >> "${GITHUB_OUTPUT}"
+      - name: Open version-bump PR
+        id: pr
+        if: steps.versions.outputs.should_update == 'true' && steps.existing.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.versions.outputs.latest }}
+          BRANCH: ${{ steps.existing.outputs.branch }}
+        run: |
+          set -euo pipefail
+
+          # Bump the build.sh default so it stops drifting. The build is always
+          # parameterized by the dispatched version, this is convenience only.
+          # NB: we deliberately do NOT touch .github/workflows/build-psycopg.yml
+          # here. GITHUB_TOKEN cannot push commits that modify workflow files
+          # (the `workflows` permission is not grantable to it), so editing it
+          # would make the push below fail.
+          sed -i -E "s/build_psycopg \"\\\$\{2:-[0-9][0-9.]*\}\"/build_psycopg \"\${2:-${VERSION}}\"/" build.sh
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "${BRANCH}"
+          git add build.sh
+          git commit -m "Bump psycopg to ${VERSION}"
+          git push origin "${BRANCH}"
+
+          pr_url=$(gh pr create \
+            --head "${BRANCH}" \
+            --title "Bump psycopg to ${VERSION}" \
+            --body "$(cat <<EOF
+          Automated detection found a newer stable psycopg release on PyPI.
+
+          - **New version:** \`${VERSION}\`
+          - **PyPI:** https://pypi.org/project/psycopg/${VERSION}/
+          - **Changelog:** https://www.psycopg.org/psycopg3/docs/news.html
+
+          This PR only bumps the \`build.sh\` version default. A **test build**
+          (\`testing\` mode, no release) has been dispatched against this branch
+          for \`${DEBIAN_RELEASE}\`; confirm it is green before merging.
+
+          After merge, dispatch \`Build Psycopg Wheels\` manually to publish the
+          real release.
+          EOF
+          )")
+          echo "Opened ${pr_url}"
+      - name: Dispatch test build
+        if: steps.versions.outputs.should_update == 'true' && steps.existing.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.versions.outputs.latest }}
+          BRANCH: ${{ steps.existing.outputs.branch }}
+        run: |
+          gh workflow run build-psycopg.yml \
+            --ref "${BRANCH}" \
+            -f version="${VERSION}" \
+            -f debian-release="${DEBIAN_RELEASE}" \
+            -f testing=true

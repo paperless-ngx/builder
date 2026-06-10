@@ -8,13 +8,13 @@ on:
         description: 'Psycopg version to build'
         required: true
         type: string
-        default: "3.2.12"
+        default: "3.3.0"
       debian-release:
         description: "Debian release to use"
         type: choice
         options:
-          - bookworm
           - trixie
+          - bookworm
       testing:
         description: 'Testing mode (build only, no release)'
         required: false
@@ -43,15 +43,15 @@ jobs:
       - name: Build psycopg Docker image
         run: |
           docker build \
-            --tag "psycopg:${{ env.INPUTS_VERSION }}" \
-            --build-arg DEBIAN_RELEASE="${{ env.DEBIAN_RELEASE }}" \
-            --build-arg PSYCOPG_VERSION="${{ env.INPUTS_VERSION }}" \
+            --tag "psycopg:${INPUTS_VERSION}" \
+            --build-arg DEBIAN_RELEASE="${DEBIAN_RELEASE}" \
+            --build-arg PSYCOPG_VERSION="${INPUTS_VERSION}" \
             --file psycopg.dockerfile \
             --progress plain \
             .
       - name: Extract built wheels
         run: |
-          image_id=$(docker create "psycopg:${{ env.INPUTS_VERSION }}")
+          image_id=$(docker create "psycopg:${INPUTS_VERSION}")
           mkdir -v -p outputs/psycopg
           docker cp "${image_id}":/usr/src/psycopg/ outputs/
 
