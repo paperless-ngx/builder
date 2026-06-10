@@ -37,7 +37,7 @@ jobs:
             arch: x86_64
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
       - name: Build psycopg Docker image
@@ -58,7 +58,7 @@ jobs:
           # List built files for verification
           find outputs/psycopg -type f -name "*.whl" -o -name "*.tar.gz" | sort
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: psycopg-wheels-${{ inputs.version }}-${{ matrix.arch }}
           path: outputs/psycopg/
@@ -71,7 +71,7 @@ jobs:
       contents: write
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: artifacts/
       - name: Prepare release artifacts
@@ -85,20 +85,26 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
       - name: Create release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: psycopg-${{ env.DEBIAN_RELEASE }}-${{ inputs.version }}
-          commit: ${{ github.sha }}
-          name: "Psycopg ${{ inputs.version }} (Multi-arch)"
-          artifacts: "release-artifacts/*"
-          prerelease: true
-          draft: false
-          replacesArtifacts: true
-          removeArtifacts: true
-          allowUpdates: true
-          body: |
-            ## Psycopg ${{ inputs.version }} Multi-architecture Wheels
-            **Version:** ${{ inputs.version }}
-            **Build Date:** ${{ steps.date.outputs.date }}
-            **Commit:** ${{ github.sha }}
-            **Actor:** ${{ github.actor }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="psycopg-${{ env.DEBIAN_RELEASE }}-${{ inputs.version }}"
+          NOTES=$(cat <<EOF
+          ## Psycopg ${{ inputs.version }} Multi-architecture Wheels
+          **Version:** ${{ inputs.version }}
+          **Build Date:** ${{ steps.date.outputs.date }}
+          **Commit:** ${{ github.sha }}
+          **Actor:** ${{ github.actor }}
+          EOF
+          )
+          if gh release view "${TAG}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "${TAG}" release-artifacts/* --clobber --repo "${{ github.repository }}"
+          else
+            gh release create "${TAG}" \
+              --repo "${{ github.repository }}" \
+              --target "${{ github.sha }}" \
+              --title "Psycopg ${{ inputs.version }} (Multi-arch)" \
+              --prerelease \
+              --notes "${NOTES}" \
+              release-artifacts/*
+          fi
