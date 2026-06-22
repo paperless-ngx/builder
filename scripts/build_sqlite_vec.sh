@@ -20,6 +20,11 @@ SQLITE_VEC_REPO="${SQLITE_VEC_REPO:-https://github.com/stumpylog/sqlite-vec.git}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILDER_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
+# Resolve OUT_DIR to an absolute path now: the build runs from inside a temp
+# clone, so a relative path would land there (and be deleted with it).
+mkdir -p "${OUT_DIR}"
+OUT_DIR="$(cd "${OUT_DIR}" && pwd)"
+
 WORK="$(mktemp -d)"
 trap 'rm -rf "${WORK}"' EXIT
 
@@ -45,7 +50,6 @@ for cand in dist/vec0.so dist/vec0.dylib; do
 done
 test -n "${BINARY}"
 
-mkdir -p "${OUT_DIR}"
 python3 "${BUILDER_ROOT}/scripts/assemble_wheel.py" \
 	--binary "${BINARY}" \
 	--version "${VERSION}" \
