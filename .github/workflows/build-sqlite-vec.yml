@@ -1,0 +1,146 @@
+name: Build sqlite-vec Wheels
+permissions:
+  contents: read
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Wheel version (PEP 440 local version)'
+        required: true
+        type: string
+        default: "0.1.10+paperless.1"
+      debian-release:
+        description: "Debian release for the Linux build"
+        type: choice
+        options:
+          - trixie
+          - bookworm
+      testing:
+        description: 'Testing mode (build only, no release)'
+        required: false
+        type: boolean
+        default: false
+env:
+  INPUTS_VERSION: ${{ inputs.version }}
+  DEBIAN_RELEASE: ${{ inputs.debian-release }}
+jobs:
+  build-linux:
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: x86_64
+            platform_tag: linux_x86_64
+          - runner: ubuntu-24.04-arm
+            arch: aarch64
+            platform_tag: linux_aarch64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build wheel image
+        run: |
+          # Docker tags cannot contain '+', so sanitize the local-version separator.
+          image_tag="sqlite-vec:${INPUTS_VERSION//+/_}"
+          docker build \
+            --tag "${image_tag}" \
+            --build-arg SQLITE_VEC_VERSION="${INPUTS_VERSION}" \
+            --build-arg PLATFORM_TAG="${{ matrix.platform_tag }}" \
+            --build-arg DEBIAN_RELEASE="${DEBIAN_RELEASE}" \
+            --file sqlite-vec.dockerfile \
+            --progress plain \
+            .
+      - name: Extract wheel
+        run: |
+          image_tag="sqlite-vec:${INPUTS_VERSION//+/_}"
+          image_id=$(docker create "${image_tag}")
+          mkdir -v -p outputs/sqlite-vec
+          docker cp "${image_id}":/usr/src/sqlite-vec/ outputs/
+          docker rm "${image_id}"
+          find outputs/sqlite-vec -name "*.whl" | sort
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sqlite-vec-wheels-${{ inputs.version }}-${{ matrix.arch }}
+          path: outputs/sqlite-vec/*.whl
+          retention-days: 7
+  build-macos:
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - runner: macos-14
+            arch: arm64
+            platform_tag: macosx_11_0_arm64
+          - runner: macos-13
+            arch: x86_64
+            platform_tag: macosx_10_13_x86_64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install gettext (envsubst)
+        run: |
+          brew install gettext
+          echo "$(brew --prefix gettext)/bin" >> "$GITHUB_PATH"
+      - name: Build wheel
+        run: |
+          ./scripts/build_sqlite_vec.sh "${INPUTS_VERSION}" "${{ matrix.platform_tag }}" outputs/sqlite-vec
+      - name: Smoke test wheel
+        run: |
+          python3 -m venv /tmp/vt
+          /tmp/vt/bin/pip install outputs/sqlite-vec/*.whl
+          /tmp/vt/bin/python -c "import sqlite3, sqlite_vec; c=sqlite3.connect(':memory:'); c.enable_load_extension(True); sqlite_vec.load(c); print(c.execute('select vec_version()').fetchone())"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sqlite-vec-wheels-${{ inputs.version }}-macos-${{ matrix.arch }}
+          path: outputs/sqlite-vec/*.whl
+          retention-days: 7
+  create-release:
+    if: ${{ !inputs.testing }}
+    needs:
+      - build-linux
+      - build-macos
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+      - name: Prepare release artifacts
+        run: |
+          mkdir -p release-artifacts
+          find artifacts/ -name "*.whl" -exec cp {} release-artifacts/ \;
+          ls -la release-artifacts/
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d %H:%M:%S UTC')" >> "$GITHUB_OUTPUT"
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: sqlite-vec-${{ inputs.version }}
+          commit: ${{ github.sha }}
+          name: "sqlite-vec ${{ inputs.version }} (Multi-arch)"
+          artifacts: "release-artifacts/*"
+          prerelease: true
+          draft: false
+          replacesArtifacts: true
+          removeArtifacts: true
+          allowUpdates: true
+          body: |
+            ## sqlite-vec ${{ inputs.version }} wheels (Linux + macOS)
+            Built from the patched fork tag `v0.1.10-paperless.1`
+            (`stumpylog/sqlite-vec`, upstream `v0.1.10-alpha.4` + open PRs).
+            **Version:** ${{ inputs.version }}
+            **Build Date:** ${{ steps.date.outputs.date }}
+            **Commit:** ${{ github.sha }}
