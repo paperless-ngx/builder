@@ -1,6 +1,7 @@
 # This Dockerfile builds the psycopg wheel
 # Inputs:
 #    - PSYCOPG_VERSION - Version to build
+#    - PYTHON_VERSION  - Python version to build the wheel against (default 3.12)
 
 #
 # Stage: builder
@@ -8,11 +9,13 @@
 #  - Build the psycopg wheel
 #
 ARG DEBIAN_RELEASE="trixie"
-FROM python:3.12-slim-${DEBIAN_RELEASE} AS builder
+ARG PYTHON_VERSION="3.12"
+FROM python:${PYTHON_VERSION}-slim-${DEBIAN_RELEASE} AS builder
 
 ARG PSYCOPG_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 ARG DEBIAN_RELEASE="trixie"
+ARG PYTHON_VERSION="3.12"
 
 ENV DEBIAN_RELEASE=${DEBIAN_RELEASE}
 

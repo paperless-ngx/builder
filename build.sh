@@ -31,11 +31,19 @@ function build_jbig2enc()
 
 function build_psycopg()
 {
-	local -r image_tag="psycopg:${1}"
-	docker build --tag "${image_tag}" --build-arg PSYCOPG_VERSION="${1}" --file psycopg.dockerfile --progress plain .
+	local -r version="${1}"
+	local -r python_version="${2:-3.12}"
+	local -r image_tag="psycopg:${version}-py${python_version}"
+	docker build \
+		--tag "${image_tag}" \
+		--build-arg PSYCOPG_VERSION="${version}" \
+		--build-arg PYTHON_VERSION="${python_version}" \
+		--file psycopg.dockerfile \
+		--progress plain .
 	image_id=$(docker create "${image_tag}")
 	mkdir -v -p outputs/psycopg
 	docker cp "${image_id}":/usr/src/psycopg/ outputs/
+	docker rm "${image_id}"
 }
 
 function build_zxing()
@@ -82,7 +90,7 @@ case "${subcommand}" in
 		;;
 
 	psycopg)
-		build_psycopg "${2:-3.3.4}"
+		build_psycopg "${2:-3.3.4}" "${3:-3.12}"
 		;;
 
 	zxing)
