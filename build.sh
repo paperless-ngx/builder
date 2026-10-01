@@ -90,7 +90,7 @@ case "${subcommand}" in
 		;;
 
 	psycopg)
-		build_psycopg "${2:-3.3.4}" "${3:-3.12}"
+		build_psycopg "${2:-3.3.6}" "${3:-3.12}"
 		;;
 
 	zxing)
