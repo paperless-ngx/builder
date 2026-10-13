@@ -2,7 +2,7 @@
 
 This repository contains the Dockerfiles to build a few programs paperless
 installs in its Docker image, at newer versions, but built for the underlying
-Debian version (Bookworm currently)
+Debian version (Trixie currently)
 
 Basically, this repository does the upfront work (compiling) at infrequent intervals,
 so the main image doesn't ever need to do that and we can provide some newer
@@ -19,7 +19,7 @@ Keeping a more updated version of QPDF
 Nothing packages jbig2enc for installation, due to license issues (real or
 perceived) and so it cannot be installed directly.
 
-In this repository, the last released version 0.30 is built as a .deb installer.
+In this repository, the last released version 0.32 is built as a .deb installer.
 
 ## Ghostscript
 
