@@ -5,7 +5,7 @@
 ARG DEBIAN_RELEASE="bookworm"
 FROM debian:${DEBIAN_RELEASE}-slim
 
-ARG JBIG2ENC_VERSION=0.30
+ARG JBIG2ENC_VERSION=0.32
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Install common dependencies required for building a Debian package.
@@ -21,6 +21,7 @@ RUN apt-get update --quiet && \
     equivs \
     build-essential \
     libleptonica-dev \
+    pkg-config \
     zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
 

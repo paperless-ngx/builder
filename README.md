@@ -45,5 +45,5 @@ the full Linux + macOS matrix via `build-sqlite-vec.yml`.
 
 1. Run `./build <thing> <version>
 
-- `./build.sh jbig2enc 0.30` for example
+- `./build.sh jbig2enc 0.32` for example
 - Output files are copied to `output/`

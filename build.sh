@@ -86,7 +86,7 @@ case "${subcommand}" in
 		;;
 
 	jbig2enc)
-		build_jbig2enc "${2:-0.30}"
+		build_jbig2enc "${2:-0.32}"
 		;;
 
 	psycopg)

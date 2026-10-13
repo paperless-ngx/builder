@@ -8,7 +8,7 @@ on:
         description: 'jbig2enc version tag to build'
         required: true
         type: string
-        default: "0.30"
+        default: "0.32"
       debian-release:
         description: "Debian release to use"
         type: choice
