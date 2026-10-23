@@ -23,7 +23,7 @@ In this repository, the last released version 0.30 is built as a .deb installer.
 
 ## Ghostscript
 
-This includes some fixes and some security fixes as well. As OCRMyPdf uses Ghostscript pretty extensively,
+This includes some fixes and some security fixes as well. As OCRmyPDF uses Ghostscript pretty extensively,
 providing a very recent version helps resolve problems with its outputs
 
 ## sqlite-vec
@@ -43,7 +43,7 @@ the full Linux + macOS matrix via `build-sqlite-vec.yml`.
 
 ## Building Installers
 
-1. Run `./build <thing> <version>
+1. Run `./build.sh <thing> <version>`
 
 - `./build.sh jbig2enc 0.30` for example
 - Output files are copied to `output/`
