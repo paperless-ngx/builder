@@ -13,7 +13,7 @@ PLATFORM_TAG="${2:?platform tag required, e.g. linux_x86_64}"
 OUT_DIR="${3:?output dir required}"
 
 # Fork + tag holding the patched source.
-SQLITE_VEC_REF="${SQLITE_VEC_REF:-v0.1.10-paperless.1}"
+SQLITE_VEC_REF="${SQLITE_VEC_REF:-v0.1.10-paperless.2}"
 SQLITE_VEC_REPO="${SQLITE_VEC_REPO:-https://github.com/stumpylog/sqlite-vec.git}"
 
 # Repo root = parent of this script's dir.
