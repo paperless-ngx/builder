@@ -8,7 +8,7 @@ on:
         description: 'Wheel version (PEP 440 local version)'
         required: true
         type: string
-        default: "0.1.10+paperless.1"
+        default: "0.1.10+paperless.2"
       debian-release:
         description: "Debian release for the Linux build"
         type: choice
@@ -75,7 +75,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - runner: macos-14
+          - runner: macos-latest
             arch: arm64
             platform_tag: macosx_11_0_arm64
           - runner: macos-15-intel
@@ -139,8 +139,8 @@ jobs:
           allowUpdates: true
           body: |
             ## sqlite-vec ${{ inputs.version }} wheels (Linux + macOS)
-            Built from the patched fork tag `v0.1.10-paperless.1`
-            (`stumpylog/sqlite-vec`, upstream `v0.1.10-alpha.4` + open PRs).
+            Built from the patched fork tag `v0.1.10-paperless.2`
+            (`stumpylog/sqlite-vec`, upstream `v0.1.10-alpha.4` + open PRs and the filtered-KNN performance fixes, see CHANGELOG-paperless.md in the fork).
             **Version:** ${{ inputs.version }}
             **Build Date:** ${{ steps.date.outputs.date }}
             **Commit:** ${{ github.sha }}
