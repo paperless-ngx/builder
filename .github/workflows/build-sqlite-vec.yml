@@ -14,7 +14,6 @@ on:
         type: choice
         options:
           - trixie
-          - bookworm
       testing:
         description: 'Testing mode (build only, no release)'
         required: false

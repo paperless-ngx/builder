@@ -13,7 +13,6 @@ on:
         description: "Debian release to use"
         type: choice
         options:
-          - bookworm
           - trixie
       testing:
         description: 'Testing mode (build only, no release)'
