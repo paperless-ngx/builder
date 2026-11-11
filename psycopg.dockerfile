@@ -21,7 +21,6 @@ ENV DEBIAN_RELEASE=${DEBIAN_RELEASE}
 
 ARG BUILD_PACKAGES="\
   build-essential \
-  curl \
   ca-certificates"
 
 WORKDIR /usr/src
@@ -33,10 +32,10 @@ RUN set -eux \
   && echo "Installing build tools" \
     && apt-get update --quiet \
     && apt-get install --yes --quiet --no-install-recommends ${BUILD_PACKAGES} \
-    && mkdir -p /usr/share/postgresql-common/pgdg/ \
-    && curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${DEBIAN_RELEASE}-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
-    && apt-get update \
+    # Use Debian's own libpq, NOT the PGDG repo. The paperless-ngx image gets
+    # libpq5 from Debian (via postgresql-client), so building against a newer
+    # PGDG libpq makes the wheel reference symbols the runtime lacks, and
+    # psycopg silently falls back to its pure-Python implementation.
     && apt-get install --yes --quiet --no-install-recommends libpq-dev \
   && echo "Installing Python tools" \
     && python3 -m pip install --no-cache-dir --upgrade pip wheel \
@@ -55,6 +54,12 @@ RUN set -eux \
       --prefer-binary \
       # Don't cache build files
       --no-cache-dir \
+    && ls -ahl wheels/ \
+  && echo "Retagging psycopg-c for Debian ${DEBIAN_RELEASE}" \
+    # The extension links dynamically against the system libpq, whose own
+    # dependencies (OpenSSL, krb5, ldap) need glibc 2.38. Trixie ships 2.41.
+    # Tag the wheel to say so, rather than a bare linux_<arch>.
+    && python3 -m wheel tags --platform-tag "manylinux_2_38_$(uname -m)" --remove wheels/psycopg_c-*.whl \
     && ls -ahl wheels/ \
   && echo "Gathering package data" \
     && dpkg-query -f '${Package;-40}${Version}\n' -W > ./wheels/pkg-list.txt \
