@@ -32,7 +32,7 @@ Builds patched `sqlite-vec` wheels for paperless-ngx's AI vector store. Upstream
 `asg017/sqlite-vec` only publishes `0.1.9` to PyPI and ships no source
 distribution, so the fixes paperless needs (the open PRs #303-#310) are not
 installable from PyPI. The patched source lives in the fork
-`stumpylog/sqlite-vec`, tagged (currently `v0.1.10-paperless.1`); the build
+`stumpylog/sqlite-vec`, tagged (currently `v0.1.10-paperless.3`); the build
 clones that tag, compiles `vec0` via the upstream `make loadable`, and wraps it
 in a `py3-none-<platform>` wheel with a small stdlib-only assembler (no
 `sqlite-dist`, no Rust). Wheels are versioned `0.1.10+paperless.N` and consumed

@@ -98,7 +98,7 @@ case "${subcommand}" in
 		;;
 
 	sqlite-vec)
-		build_sqlite_vec "${2:-0.1.10+paperless.1}" "${3:-linux_x86_64}"
+		build_sqlite_vec "${2:-0.1.10+paperless.3}" "${3:-linux_x86_64}"
 		;;
 
 	*)
