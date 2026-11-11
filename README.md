@@ -35,7 +35,9 @@ installable from PyPI. The patched source lives in the fork
 `stumpylog/sqlite-vec`, tagged (currently `v0.1.10-paperless.3`); the build
 clones that tag, compiles `vec0` via the upstream `make loadable`, and wraps it
 in a `py3-none-<platform>` wheel with a small stdlib-only assembler (no
-`sqlite-dist`, no Rust). Wheels are versioned `0.1.10+paperless.N` and consumed
+`sqlite-dist`, no Rust). The Linux wheels are tagged `manylinux_2_29_<arch>`
+(the library needs glibc 2.29), and the build fails if a toolchain change
+raises that (`scripts/check_glibc_floor.sh`). Wheels are versioned `0.1.10+paperless.N` and consumed
 in paperless-ngx via `[tool.uv.sources]` URL pins.
 
 Build locally with `./build.sh sqlite-vec [version] [platform_tag]`; CI builds

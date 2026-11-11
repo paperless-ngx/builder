@@ -58,7 +58,7 @@ function build_zxing()
 function build_sqlite_vec()
 {
 	local -r version="${1}"
-	local -r platform_tag="${2:-linux_x86_64}"
+	local -r platform_tag="${2:-manylinux_2_29_x86_64}"
 	# Docker tags cannot contain '+', so sanitize the local-version separator.
 	local -r image_tag="sqlite-vec:${version//+/_}"
 	docker build \
@@ -98,7 +98,7 @@ case "${subcommand}" in
 		;;
 
 	sqlite-vec)
-		build_sqlite_vec "${2:-0.1.10+paperless.3}" "${3:-linux_x86_64}"
+		build_sqlite_vec "${2:-0.1.10+paperless.3}" "${3:-manylinux_2_29_x86_64}"
 		;;
 
 	*)

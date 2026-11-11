@@ -86,6 +86,19 @@ class TestAssembleWheel(unittest.TestCase):
             self.assertIn("Root-Is-Purelib: false", wheelmeta)
             self.assertIn("Tag: py3-none-linux_x86_64", wheelmeta)
 
+    def test_manylinux_tag(self):
+        with TemporaryDirectory() as tmp:
+            wheel = build(tmp, tag="manylinux_2_29_aarch64")
+            self.assertEqual(
+                wheel.name,
+                "sqlite_vec-0.1.10+paperless.1-py3-none-manylinux_2_29_aarch64.whl",
+            )
+            with zipfile.ZipFile(wheel) as z:
+                wheelmeta = z.read(
+                    "sqlite_vec-0.1.10+paperless.1.dist-info/WHEEL"
+                ).decode()
+            self.assertIn("Tag: py3-none-manylinux_2_29_aarch64", wheelmeta)
+
     def test_record_hashes_match(self):
         import base64
         with TemporaryDirectory() as tmp:

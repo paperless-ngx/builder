@@ -32,10 +32,10 @@ jobs:
         include:
           - runner: ubuntu-24.04
             arch: x86_64
-            platform_tag: linux_x86_64
+            platform_tag: manylinux_2_29_x86_64
           - runner: ubuntu-24.04-arm
             arch: aarch64
-            platform_tag: linux_aarch64
+            platform_tag: manylinux_2_29_aarch64
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

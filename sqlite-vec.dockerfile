@@ -1,7 +1,7 @@
 # This Dockerfile builds a patched sqlite-vec wheel
 # Inputs:
 #   - SQLITE_VEC_VERSION : wheel version, e.g. 0.1.10+paperless.1
-#   - PLATFORM_TAG       : linux_x86_64 | linux_aarch64
+#   - PLATFORM_TAG       : manylinux_2_29_x86_64 | manylinux_2_29_aarch64
 #   - DEBIAN_RELEASE     : trixie (default)
 
 #
@@ -41,6 +41,8 @@ RUN set -eux \
     && python3 -m venv /tmp/vt \
     && /tmp/vt/bin/pip install /usr/src/wheels/*.whl \
     && /tmp/vt/bin/python -c "import sqlite3, sqlite_vec; c=sqlite3.connect(':memory:'); c.enable_load_extension(True); sqlite_vec.load(c); print(c.execute('select vec_version()').fetchone())" \
+  && echo "Checking the wheel's glibc floor against its tag" \
+    && ./scripts/check_glibc_floor.sh /usr/src/wheels/*.whl "${PLATFORM_TAG}" \
   && echo "Cleaning up image" \
     && apt-get -y purge ${BUILD_PACKAGES} \
     && apt-get -y autoremove --purge \

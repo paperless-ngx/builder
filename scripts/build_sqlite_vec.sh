@@ -9,7 +9,7 @@
 set -euxo pipefail
 
 VERSION="${1:?version required, e.g. 0.1.10+paperless.1}"
-PLATFORM_TAG="${2:?platform tag required, e.g. linux_x86_64}"
+PLATFORM_TAG="${2:?platform tag required, e.g. manylinux_2_29_x86_64}"
 OUT_DIR="${3:?output dir required}"
 
 # Fork + tag holding the patched source.
