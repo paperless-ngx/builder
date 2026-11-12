@@ -86,6 +86,8 @@ jobs:
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
+          # No checkout in this job, so gh cannot infer the repo from a git remote
+          GH_REPO: ${{ github.repository }}
         run: |
           TAG="zxing-${{ env.DEBIAN_RELEASE }}-${{ inputs.version }}"
           NOTES=$(cat <<EOF

@@ -92,6 +92,8 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          # No checkout in this job, so gh cannot infer the repo from a git remote
+          GH_REPO: ${{ github.repository }}
         run: |
           TAG="jbig2enc-${{ env.DEBIAN_RELEASE }}-v${{ env.JBIG2ENC_VERSION }}"
           NOTES=$(cat <<EOF
